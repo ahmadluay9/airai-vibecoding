@@ -1,0 +1,173 @@
+@import "tailwindcss";
+
+@theme {
+    /* Base Typography */
+    --font-sans: "Google Sans", ui-sans-serif, system-ui, sans-serif;
+    
+    /* Google News Color Palette */
+    --color-g-blue: #174EA6;
+    --color-g-red: #A50E0E;
+    --color-g-orange: #E37400;
+    --color-g-green: #0D652D;
+    
+    --color-g-blue-medium: #4285F4;
+    --color-g-red-medium: #EA4335;
+    --color-g-yellow: #FBBC04;
+    --color-g-green-medium: #34A853;
+    
+    --color-g-blue-light: #D2E3FC;
+    --color-g-red-light: #FAD2CF;
+    --color-g-yellow-light: #FEEFC3;
+    --color-g-green-light: #CEEAD6;
+    
+    --color-g-grey-light: #F1F3F4;
+    --color-g-grey: #9AA0A6;
+    --color-g-black: #202124;
+}
+
+/* =========================================
+   1. Typography Setup (Local Variable Fonts)
+   ========================================= */
+@font-face {
+    font-family: 'Google Sans';
+    src: url('/assets/fonts/GoogleSans-Variable.ttf') format('truetype');
+    font-weight: 100 900;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Google Sans';
+    src: url('/assets/fonts/GoogleSans-Italic-Variable.ttf') format('truetype');
+    font-weight: 100 900;
+    font-style: italic;
+    font-display: swap;
+}
+
+/* =========================================
+   2. Base Styles
+   ========================================= */
+@layer base {
+    body, html {
+        margin: 0; 
+        padding: 0; 
+        height: 100%;
+        background-color: var(--color-g-black); 
+        color: var(--color-g-grey-light);
+        
+        font-family: var(--font-sans);
+        font-optical-sizing: auto;
+        font-style: normal;
+        font-variation-settings: "GRAD" 0;
+        
+        overflow: hidden;
+        transition: background-color 1s ease, color 1s ease;
+    }
+}
+
+/* =========================================
+   3. Custom Components & Utilities
+   ========================================= */
+@layer components {
+    #canvas-container {
+        position: absolute; 
+        top: 0; 
+        left: 0; 
+        width: 100%; 
+        height: 100%; 
+        z-index: 0;
+    }
+    
+    .glass-panel {
+        background: color-mix(in srgb, var(--color-g-black) 60%, transparent);
+        backdrop-filter: blur(20px); 
+        -webkit-backdrop-filter: blur(20px);
+        border: 1px solid color-mix(in srgb, var(--color-g-grey-light) 10%, transparent);
+        box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+        z-index: 10; 
+        position: relative;
+    }
+    
+    .glow-text { 
+        text-shadow: 0 0 20px currentColor; 
+    }
+    
+    /* Base AQI Colors Mapped to Google Palette */
+    .aqi-1 { color: var(--color-g-green-medium); } /* Good */
+    .aqi-2 { color: var(--color-g-yellow); } /* Fair */
+    .aqi-3 { color: var(--color-g-orange); } /* Mod */
+    .aqi-4 { color: var(--color-g-red-medium); } /* Poor */
+    .aqi-5 { color: var(--color-g-red); } /* Very Poor */
+    
+    .stat-card { 
+        transition: all 0.3s ease; 
+    }
+    .stat-card:hover { 
+        transform: translateY(-3px); 
+        background: color-mix(in srgb, var(--color-g-grey-light) 10%, transparent); 
+    }
+    
+    /* Danger Vibe Shift */
+    .danger-vibe { 
+        background-color: color-mix(in srgb, var(--color-g-red) 20%, var(--color-g-black)); 
+    }
+    .danger-panel { 
+        border-color: color-mix(in srgb, var(--color-g-red-medium) 40%, transparent); 
+        box-shadow: 0 0 50px color-mix(in srgb, var(--color-g-red-medium) 20%, transparent); 
+    }
+}
+
+@layer utilities {
+    .scrollbar-hide::-webkit-scrollbar {
+        display: none;
+    }
+    .scrollbar-hide {
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+    }
+}
+
+/* =========================================
+   4. Theming (Siang / Day Mode Overrides)
+   ========================================= */
+body.theme-day { 
+    background-color: var(--color-g-grey-light); 
+    color: var(--color-g-black); 
+} 
+
+body.theme-day .glass-panel {
+    background: color-mix(in srgb, var(--color-g-grey-light) 75%, transparent);
+    border-color: color-mix(in srgb, var(--color-g-black) 10%, transparent);
+    box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.05);
+}
+
+/* Specific text overrides for Day theme */
+body.theme-day .text-g-grey-light { color: var(--color-g-black) !important; }
+body.theme-day .text-g-grey { color: var(--color-g-grey) !important; }
+
+/* Override card backgrounds for Day theme */
+body.theme-day .bg-g-grey-light\/5 { 
+    background-color: color-mix(in srgb, var(--color-g-black) 5%, transparent) !important; 
+    border-color: color-mix(in srgb, var(--color-g-black) 5%, transparent) !important; 
+}
+body.theme-day .bg-g-black\/40 { background-color: color-mix(in srgb, var(--color-g-grey-light) 60%, transparent) !important; }
+body.theme-day .hover\:bg-g-black\/60:hover { background-color: color-mix(in srgb, var(--color-g-grey-light) 90%, transparent) !important; }
+body.theme-day .bg-g-black\/80 { background-color: color-mix(in srgb, var(--color-g-grey-light) 80%, transparent) !important; }
+body.theme-day .border-g-grey-light\/10 { border-color: color-mix(in srgb, var(--color-g-black) 10%, transparent) !important; }
+
+/* Danger Vibe Siang */
+body.theme-day.danger-vibe { 
+    background-color: var(--color-g-red-light); 
+} 
+body.theme-day .danger-panel { 
+    background: color-mix(in srgb, var(--color-g-red-light) 60%, transparent); 
+    border-color: color-mix(in srgb, var(--color-g-red-medium) 40%, transparent) !important; 
+    box-shadow: 0 0 40px color-mix(in srgb, var(--color-g-red-medium) 15%, transparent); 
+}
+
+/* High Contrast AQI overrides for Light Mode */
+body.theme-day .aqi-1 { color: var(--color-g-green); }
+body.theme-day .aqi-2 { color: #D19D00; } /* Darkened Google Yellow for legibility */
+body.theme-day .aqi-3 { color: var(--color-g-orange); }
+body.theme-day .aqi-4 { color: var(--color-g-red-medium); }
+body.theme-day .aqi-5 { color: var(--color-g-red); }

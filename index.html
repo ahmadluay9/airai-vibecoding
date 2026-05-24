@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NAPAS - Live Air Vibe</title>
+        
+    <link rel="icon" type="image/x-icon" href="/favicon.ico">
+        
+    <link rel="stylesheet" href="/src/styles/main.css">
+</head>
+
+<body id="body-bg" class="font-sans flex items-center justify-center min-h-screen p-4">
+
+    <!-- Ambient Particle Background -->
+    <canvas id="canvas-container"></canvas>
+
+    <!-- UI Overlay -->
+    <main id="main-panel" class="glass-panel rounded-3xl p-6 sm:p-8 w-full max-w-2xl flex flex-col gap-5 transition-all duration-700 max-h-[95vh] overflow-y-auto scrollbar-hide">
+        
+        <!-- Emergency Alert Banner -->
+        <div id="alert-banner" class="hidden bg-g-red-medium/20 border border-g-red-medium/50 rounded-lg p-4 text-g-red-light text-sm animate-pulse flex items-center gap-3">
+            <svg class="w-6 h-6 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+            <div><strong>PERINGATAN KRITIS:</strong> Kualitas udara mencapai tingkat beracun. Tutup ventilasi ruangan dan gunakan filter udara sekarang.</div>
+        </div>
+
+        <header class="flex justify-between items-start mb-2">
+            <div>
+                <h1 class="text-2xl sm:text-3xl font-bold tracking-tight text-g-grey-light" id="location-name">Mendeteksi Lokasi...</h1>
+                
+                <p class="text-xs sm:text-sm text-g-grey font-medium tracking-wide mt-1" id="current-datetime">Memuat waktu...</p>
+                
+                <div class="flex flex-col sm:flex-row sm:items-center gap-2 mt-2">
+                    <div class="flex items-center gap-2">
+                        <span class="relative flex h-3 w-3" id="ping-container">
+                        <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-g-green-medium opacity-75" id="ping-dot"></span>
+                        <span class="relative inline-flex rounded-full h-3 w-3 bg-g-green-medium" id="ping-solid"></span>
+                        </span>
+                        <p class="text-[10px] sm:text-xs text-g-green-medium font-mono tracking-wider" id="status-text">ACQUIRING GPS SIGNAL...</p>
+                    </div>
+                    <span class="hidden sm:inline text-g-grey">|</span>
+                    <p class="text-[10px] sm:text-xs text-g-blue-medium font-mono tracking-wider flex items-center gap-1" id="weather-status">
+                        <span class="opacity-50">MENDETEKSI CUACA...</span>
+                    </p>
+                </div>
+            </div>
+            <div class="text-right">
+                <div class="text-6xl sm:text-7xl font-black glow-text transition-colors duration-500" id="aqi-display">-</div>
+                <p class="text-[10px] sm:text-sm font-semibold uppercase tracking-widest text-g-grey mt-1">AQI Level</p>
+            </div>
+        </header>
+
+        <div class="w-full h-px bg-gradient-to-r from-transparent via-g-grey/50 to-transparent"></div>
+
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 mt-2" id="components-grid">
+            <!-- Data Cards injected here -->
+        </div>
+
+        <!-- Sparkline Trend PM2.5 -->
+        <div class="border border-g-grey-light/10 rounded-xl p-4 bg-g-black/40 shadow-inner transition-all hover:bg-g-black/60">
+            <div class="flex justify-between items-center mb-2">
+                <span class="text-[10px] sm:text-xs font-bold text-g-grey uppercase tracking-wider">Tren Prediksi PM2.5 (24 Jam)</span>
+                <span class="text-[10px] text-g-blue-medium animate-pulse">● Live Forecast</span>
+            </div>
+            <canvas id="pm25-sparkline" width="600" height="60" class="w-full h-[50px] sm:h-[60px]"></canvas>
+        </div>
+
+        <!-- Weather Forecast (24 Jam) -->
+        <div class="border border-g-grey-light/10 rounded-xl p-4 bg-g-black/40 shadow-inner transition-all hover:bg-g-black/60">
+            <div class="flex justify-between items-center mb-3">
+                <span class="text-[10px] sm:text-xs font-bold text-g-grey uppercase tracking-wider">Prakiraan Cuaca (24 Jam)</span>
+                <span class="text-[9px] sm:text-[10px] text-g-blue-medium">Suhu & Kondisi</span>
+            </div>
+            <div id="weather-forecast-container" class="flex overflow-x-auto gap-3 pb-2 scrollbar-hide" style="-webkit-overflow-scrolling: touch;">
+                <!-- Data cuaca disuntikkan di sini -->
+                <p class="text-xs text-g-grey">Memuat prakiraan cuaca...</p>
+            </div>
+        </div>
+
+        <!-- Gemini AI Integration Section -->
+        <div class="border-t border-g-grey-light/10 pt-4">
+            <button id="btn-ai" class="w-full bg-g-blue/80 hover:bg-g-blue-medium text-g-grey-light font-semibold py-3 px-4 rounded-xl shadow-lg shadow-g-blue-medium/30 transition-all duration-300 flex justify-center items-center gap-2 group border border-g-blue-light/30 hidden">
+                <span class="group-hover:scale-110 transition-transform">✨</span> Analisis Vibe Udara AI
+            </button>
+            
+            <div id="ai-response-container" class="hidden mt-4 bg-g-black/80 rounded-xl p-4 border border-g-blue-medium/30 shadow-inner">
+                <div id="ai-loading" class="hidden flex items-center gap-3 text-g-blue-medium text-sm font-medium">
+                    <svg class="animate-spin h-5 w-5 text-g-blue-medium" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                    Gemini sedang membaca atmosfer...
+                </div>
+                <div id="ai-content" class="text-sm text-g-grey-light leading-relaxed font-sans"></div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Link to your modular JavaScript entry point -->
+    <script type="module" src="/src/js/main.js"></script>
+</body>
+</html>
