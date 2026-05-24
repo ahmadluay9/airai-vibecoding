@@ -6,15 +6,52 @@ let isDayTime = false;
 let rainArray = [];
 let lightningFlash = 0;
 
+// Coordinate State & Sync Logic
+let currentLat = -6.2088; // Default to Jakarta
+let currentLon = 106.8456;
+let syncIntervalId = null;
+let currentTimezoneOffset = 0;
+let isTimezoneSet = false;
+
 function updateDateTime() {
     const now = new Date();
+    let localTime = now;
+
+    if (isTimezoneSet) {
+        // Calculate UTC time then apply the specific location's timezone offset
+        const utcTime = now.getTime() + (now.getTimezoneOffset() * 60000);
+        localTime = new Date(utcTime + (currentTimezoneOffset * 1000));
+    }
+
     const optionsDate = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
-    const dateString = now.toLocaleDateString('id-ID', optionsDate);
-    const timeString = now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-    document.getElementById('current-datetime').innerText = `${dateString} | ${timeString}`;
+    const dateString = localTime.toLocaleDateString('en-US', optionsDate);
+    // Force 24-hour format with colons (HH:MM:SS)
+    const timeString = localTime.toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    document.getElementById('current-datetime').innerText = `${dateString} | ${timeString} ${isTimezoneSet ? '(Local Time)' : ''}`;
 }
 setInterval(updateDateTime, 1000);
 updateDateTime();
+
+const startAutoSync = () => {
+    if (syncIntervalId) clearInterval(syncIntervalId);
+    // Refresh every 15 minutes
+    syncIntervalId = setInterval(async () => {
+        const statusEl = document.getElementById('status-text');
+        const pingSolid = document.getElementById('ping-solid');
+        
+        statusEl.innerHTML = "BACKGROUND SYNCING...";
+        statusEl.classList.remove('text-g-blue-medium', 'text-g-red-medium');
+        statusEl.classList.add('text-g-green-medium');
+        
+        document.getElementById('ping-dot').classList.remove('hidden'); 
+        
+        pingSolid.classList.remove('bg-g-blue-medium', 'bg-g-red-medium');
+        pingSolid.classList.add('bg-g-green-medium');
+        
+        await fetchRealAirData(currentLat, currentLon);
+    }, 15 * 60 * 1000); 
+};
+
 
 // --- 1. GENERATIVE ART SETUP (Variables & Canvas) ---
 const canvas = document.getElementById('canvas-container');
@@ -109,7 +146,14 @@ class Particle {
 }
 
 function initParticles(pm25, co, aqi) {
-    const targetCount = Math.min(Math.floor(pm25 * 8), 500) + 50; 
+    // Significantly increase particle count based on AQI level (1 to 5)
+    // Multipliers: Good(1x), Fair(2x), Mod(4x), Poor(8x), Very Poor(15x)
+    const aqiMultiplier = [1, 2, 4, 8, 15][Math.max(0, aqi - 1)] || 1;
+    const baseCount = Math.floor(pm25 * 10);
+    
+    // Scale up the maximum cap to allow for very dense visual pollution
+    const targetCount = Math.min(baseCount * aqiMultiplier, 1500) + (aqi * 50); 
+    
     particlesArray = [];
     for (let i = 0; i < targetCount; i++) {
         particlesArray.push(new Particle(aqi, pm25, co));
@@ -189,10 +233,18 @@ function updateUI(data) {
         { label: 'Ozone', value: comps.o3.toFixed(1), highlight: comps.o3 > 100 }
     ];
 
+    const metricDescriptions = {
+        'PM2.5': 'Partikel halus (asap/debu). Standar aman < 15 µg/m³',
+        'PM10': 'Partikel kasar (debu jalan). Standar aman < 45 µg/m³',
+        'CO': 'Karbon Monoksida (emisi gas buang kendaraan).',
+        'Ozone': 'Ozon permukaan (pemicu iritasi pernapasan).'
+    };
+
     metrics.forEach(m => {
         const highlightClass = m.highlight ? 'text-g-red-medium glow-text' : 'text-g-grey-light';
+        const tooltipText = metricDescriptions[m.label] || '';
         grid.innerHTML += `
-            <div class="stat-card border border-g-grey-light/10 bg-g-grey-light/5 rounded-xl p-3 sm:p-4 flex flex-col items-center justify-center gap-1">
+            <div data-tooltip="${tooltipText}" class="stat-card border border-g-grey-light/10 bg-g-grey-light/5 rounded-xl p-3 sm:p-4 flex flex-col items-center justify-center gap-1 relative">
                 <span class="text-[10px] sm:text-xs font-bold text-g-grey uppercase tracking-wider">${m.label}</span>
                 <span class="text-xl sm:text-2xl font-medium ${highlightClass}">${m.value}</span>
                 <span class="text-[9px] sm:text-[10px] text-g-grey/80">µg/m³</span>
@@ -207,42 +259,190 @@ function updateUI(data) {
 }
 
 // --- 3. GRAFIK SPARKLINE ---
-function drawSparkline(dataPoints) {
+function drawSparkline(forecastDataList) {
     const canvas = document.getElementById('pm25-sparkline');
     if (!canvas) return;
+
+    // Create Tooltip Element dynamically if it doesn't exist
+    let tooltipEl = document.getElementById('chart-tooltip');
+    if (!tooltipEl) {
+        tooltipEl = document.createElement('div');
+        tooltipEl.id = 'chart-tooltip';
+        // Force explicit colors for the tooltip to ensure it's visible in both modes
+        tooltipEl.className = 'absolute hidden bg-[#202124]/95 text-[#F1F3F4] text-xs py-1.5 px-2.5 rounded-lg border border-[#F1F3F4]/20 shadow-xl z-[100] pointer-events-none transform -translate-x-1/2 -translate-y-full';
+        document.body.appendChild(tooltipEl);
+    }
+
+    const dataPoints = forecastDataList.map(item => item.components.pm2_5);
+
+    // Clean up old event listeners to prevent duplication
+    if (canvas._hoverListener) {
+        canvas.removeEventListener('mousemove', canvas._hoverListener);
+        canvas.removeEventListener('mouseleave', canvas._leaveListener);
+    }
+
+    // Attach Hover Listener
+    canvas._hoverListener = (e) => {
+        const rect = canvas.getBoundingClientRect();
+        const cssMouseX = e.clientX - rect.left;
+        
+        const cssPLeft = 35;
+        const cssPRight = 15;
+        const cssDrawW = rect.width - cssPLeft - cssPRight;
+        const cssStep = cssDrawW / Math.max((dataPoints.length - 1), 1);
+
+        let index = Math.round((cssMouseX - cssPLeft) / cssStep);
+        
+        // Check if mouse is hovering within the valid chart X bounds (with small buffer)
+        if (index >= 0 && index < dataPoints.length && cssMouseX >= cssPLeft - cssStep && cssMouseX <= (rect.width - cssPRight + cssStep)) {
+            // Strictly bound the index
+            index = Math.max(0, Math.min(index, dataPoints.length - 1));
+            
+            const val = dataPoints[index];
+            const dataItem = forecastDataList[index];
+            
+            // Format time for tooltip
+            let localTime = new Date(dataItem.dt * 1000);
+            if (isTimezoneSet) {
+                const utcTime = localTime.getTime() + (localTime.getTimezoneOffset() * 60000);
+                localTime = new Date(utcTime + (currentTimezoneOffset * 1000));
+            }
+            const timeStr = localTime.toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit' });
+            
+            tooltipEl.innerHTML = `
+                <div class="font-bold text-[#D2E3FC]">${val.toFixed(1)} <span class="text-[9px] font-normal text-[#9AA0A6]">µg/m³</span></div>
+                <div class="text-[10px] text-[#F1F3F4] mt-0.5">${timeStr}</div>
+            `;
+            
+            tooltipEl.style.left = `${e.pageX}px`;
+            tooltipEl.style.top = `${e.pageY - 15}px`;
+            tooltipEl.classList.remove('hidden');
+            
+            renderSparklineCanvas(forecastDataList, index);
+        } else {
+            tooltipEl.classList.add('hidden');
+            renderSparklineCanvas(forecastDataList, -1);
+        }
+    };
+
+    // Attach Leave Listener
+    canvas._leaveListener = () => {
+        tooltipEl.classList.add('hidden');
+        renderSparklineCanvas(forecastDataList, -1);
+    };
+
+    canvas.addEventListener('mousemove', canvas._hoverListener);
+    canvas.addEventListener('mouseleave', canvas._leaveListener);
+
+    // Initial render without hover
+    renderSparklineCanvas(forecastDataList, -1);
+}
+
+// Sparkline Render Helper
+function renderSparklineCanvas(forecastDataList, hoverIndex) {
+    const canvas = document.getElementById('pm25-sparkline');
+    const dpr = window.devicePixelRatio || 1;
+    const rect = canvas.getBoundingClientRect();
+    
+    const cssWidth = rect.width || 600;
+    const cssHeight = rect.height || 60;
+    
+    canvas.width = cssWidth * dpr;
+    canvas.height = cssHeight * dpr;
+    
     const ctx = canvas.getContext('2d');
     const width = canvas.width;
     const height = canvas.height;
 
     ctx.clearRect(0, 0, width, height);
-    if (!dataPoints || dataPoints.length === 0) return;
 
+    const dataPoints = forecastDataList.map(item => item.components.pm2_5);
     const max = Math.max(...dataPoints, 50); 
     const min = 0;
-    const step = width / (dataPoints.length - 1);
+    
+    const pTop = 15 * dpr;
+    const pBottom = 20 * dpr; 
+    const pLeft = 35 * dpr;   
+    const pRight = 15 * dpr;
+    
+    const drawW = width - pLeft - pRight;
+    const drawH = height - pTop - pBottom;
+    const step = drawW / Math.max((dataPoints.length - 1), 1);
 
+    const getX = (i) => pLeft + (i * step);
+    const getY = (val) => (pTop + drawH) - ((val - min) / (max - min)) * drawH;
+
+    // Draw Y-axis labels
+    ctx.font = `${10 * dpr}px 'Google Sans', sans-serif`;
+    ctx.fillStyle = "#9AA0A6"; // g-grey
+    ctx.textAlign = "right";
+    ctx.textBaseline = "middle";
+    ctx.fillText(Math.round(max), pLeft - (6 * dpr), pTop);
+    ctx.fillText(Math.round(max / 2), pLeft - (6 * dpr), pTop + drawH / 2);
+    ctx.fillText(0, pLeft - (6 * dpr), pTop + drawH);
+
+    // Draw X-axis labels (Time)
+    ctx.textAlign = "center";
+    ctx.textBaseline = "top";
+    for (let i = 0; i < forecastDataList.length; i += 6) { 
+        const x = getX(i);
+        let localTime = new Date(forecastDataList[i].dt * 1000);
+        if (isTimezoneSet) {
+            const utcTime = localTime.getTime() + (localTime.getTimezoneOffset() * 60000);
+            localTime = new Date(utcTime + (currentTimezoneOffset * 1000));
+        }
+        const timeStr = localTime.toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit' });
+        ctx.fillText(timeStr, x, pTop + drawH + (6 * dpr));
+    }
+
+    // Draw Sparkline Path
     ctx.beginPath();
     ctx.strokeStyle = '#4285F4'; // Google Medium Blue
-    ctx.lineWidth = 3;
+    ctx.lineWidth = 2.5 * dpr;
     ctx.lineJoin = 'round';
     ctx.lineCap = 'round';
 
-    let gradient = ctx.createLinearGradient(0, 0, 0, height);
+    let gradient = ctx.createLinearGradient(0, pTop, 0, pTop + drawH);
     gradient.addColorStop(0, 'rgba(66, 133, 244, 0.6)');
     gradient.addColorStop(1, 'rgba(66, 133, 244, 0.0)');
 
-    ctx.moveTo(0, height - ((dataPoints[0] - min) / (max - min)) * height);
+    ctx.moveTo(getX(0), getY(dataPoints[0]));
     for (let i = 1; i < dataPoints.length; i++) {
-        const x = i * step;
-        const y = height - ((dataPoints[i] - min) / (max - min)) * height;
-        ctx.lineTo(x, y);
+        ctx.lineTo(getX(i), getY(dataPoints[i]));
     }
     ctx.stroke();
-    ctx.lineTo(width, height);
-    ctx.lineTo(0, height);
+    
+    // Fill area under the line
+    ctx.lineTo(getX(dataPoints.length - 1), pTop + drawH);
+    ctx.lineTo(getX(0), pTop + drawH);
     ctx.closePath();
     ctx.fillStyle = gradient;
     ctx.fill();
+
+    // Draw Hover Indicator (Vertical Line + Dot)
+    if (hoverIndex >= 0 && hoverIndex < dataPoints.length) {
+        const hx = getX(hoverIndex);
+        const hy = getY(dataPoints[hoverIndex]);
+
+        // Vertical dashed line
+        ctx.beginPath();
+        ctx.strokeStyle = 'rgba(154, 160, 166, 0.5)';
+        ctx.lineWidth = 1 * dpr;
+        ctx.setLineDash([4 * dpr, 4 * dpr]);
+        ctx.moveTo(hx, pTop);
+        ctx.lineTo(hx, pTop + drawH);
+        ctx.stroke();
+        ctx.setLineDash([]); // Reset dash
+
+        // Highlight dot
+        ctx.beginPath();
+        ctx.arc(hx, hy, 4 * dpr, 0, 2 * Math.PI);
+        ctx.fillStyle = '#202124'; // Dark background
+        ctx.fill();
+        ctx.lineWidth = 2 * dpr;
+        ctx.strokeStyle = '#D2E3FC'; // Google Light Blue border
+        ctx.stroke();
+    }
 }
 
 // --- 4. INTEGRASI GEMINI API (LLM) ---
@@ -298,9 +498,11 @@ async function analyzeAirWithGemini() {
         const aiResponse = await fetchGeminiWithRetry(promptData);
         loading.classList.add('hidden');
         loading.classList.remove('flex');
-        // Rely on inherited colors so the text perfectly matches the Day/Night theme 
-        // without hardcoding arbitrary Tailwind colors that might fail to compile.
-        content.innerHTML = `<p class="mb-2 font-bold opacity-80">✨ Analisis NAPAS AI:</p>` + 
+        
+        // Custom SVG String to be injected into HTML content for the Gemini Logo
+        const geminiIconSvg = `<img src="https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/google-gemini.svg" alt="Gemini Logo" class="w-4 h-4 inline-block mr-1 align-text-bottom" />`;
+        
+        content.innerHTML = `<p class="mb-2 font-bold opacity-80 flex items-center">${geminiIconSvg} Analisis NAPAS AI:</p>` + 
                             `<div class="opacity-90">` + 
                             aiResponse.replace(/\n/g, '<br>').replace(/\*\*(.*?)\*\*/g, '<strong class="font-bold opacity-100">$1</strong>') +
                             `</div>`;
@@ -319,7 +521,7 @@ document.getElementById('btn-ai').addEventListener('click', analyzeAirWithGemini
 async function fetchLocationName(lat, lon) {
     try {
         const url = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}&zoom=14&addressdetails=1`;
-        const response = await fetch(url, { headers: { 'Accept-Language': 'id-ID,id;q=0.9' }});
+        const response = await fetch(url, { headers: { 'Accept-Language': 'en-US,en;q=0.9' }});
         if (!response.ok) throw new Error("Gagal geocoding");
         const data = await response.json();
         
@@ -336,14 +538,69 @@ async function fetchLocationName(lat, lon) {
     }
 }
 
+async function searchLocation(query) {
+    const statusEl = document.getElementById('status-text');
+    const pingSolid = document.getElementById('ping-solid');
+    const searchContainer = document.getElementById('location-search-container');
+    const locHeader = document.getElementById('location-header');
+    const searchInput = document.getElementById('location-input');
+
+    statusEl.innerHTML = "MENCARI LOKASI...";
+    statusEl.classList.remove('text-g-blue-medium', 'text-g-red-medium');
+    statusEl.classList.add('text-g-green-medium');
+    document.getElementById('ping-dot').classList.remove('hidden'); 
+    pingSolid.classList.remove('bg-g-blue-medium', 'bg-g-red-medium');
+    pingSolid.classList.add('bg-g-green-medium');
+
+    try {
+        const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&limit=1`;
+        const response = await fetch(url, { headers: { 'Accept-Language': 'en-US,en;q=0.9' }});
+        if (!response.ok) throw new Error("Gagal mencari lokasi");
+        const data = await response.json();
+
+        if (data && data.length > 0) {
+            currentLat = parseFloat(data[0].lat);
+            currentLon = parseFloat(data[0].lon);
+            
+            // Reformat display name to City/Region
+            let displayName = data[0].display_name.split(',').slice(0, 2).join(',').trim();
+            document.getElementById('location-name').innerText = displayName;
+
+            // Close search UI
+            searchContainer.classList.add('hidden');
+            searchContainer.classList.remove('flex');
+            locHeader.classList.remove('hidden');
+            searchInput.value = '';
+
+            await fetchRealAirData(currentLat, currentLon);
+            startAutoSync(); // Restart the 15-minute background timer
+        } else {
+            throw new Error("Lokasi tidak ditemukan");
+        }
+    } catch (error) {
+        console.error("Kesalahan pencarian:", error);
+        statusEl.innerHTML = `PENCARIAN GAGAL <span class="text-g-grey/70 ml-1 font-sans text-[9px] sm:text-[10px] lowercase tracking-normal">(tidak ditemukan)</span>`;
+        statusEl.classList.remove('text-g-green-medium', 'text-g-blue-medium');
+        statusEl.classList.add('text-g-red-medium');
+        document.getElementById('ping-dot').classList.add('hidden');
+        pingSolid.classList.remove('bg-g-green-medium', 'bg-g-blue-medium');
+        pingSolid.classList.add('bg-g-red-medium');
+    }
+}
+
 async function fetchRealAirData(lat, lon) {
     try {
         try {
-            const weatherUrl = `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&appid=${API_KEY}&units=metric&lang=id`;
+            const weatherUrl = `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&appid=${API_KEY}&units=metric&lang=en`;
             const weatherRes = await fetch(weatherUrl);
             const weatherData = await weatherRes.json();
             
             if (weatherData && weatherData.weather) {
+                // Apply the new timezone offset and instantly force a clock update
+                currentTimezoneOffset = weatherData.timezone || 0;
+                isTimezoneSet = true;
+                updateDateTime();
+                
                 const condition = weatherData.weather[0].main; 
                 const desc = weatherData.weather[0].description;
                 const iconCode = weatherData.weather[0].icon; 
@@ -375,15 +632,16 @@ async function fetchRealAirData(lat, lon) {
             const forecastRes = await fetch(forecastUrl);
             const forecastData = await forecastRes.json();
             if (forecastData && forecastData.list) {
-                const pm25Trend = forecastData.list.slice(0, 24).map(item => item.components.pm2_5);
-                drawSparkline(pm25Trend);
+                // IMPORTANT FIX: Pass the entire list of 24 entries to extract both PM2.5 and timestamps
+                const next24hPollution = forecastData.list.slice(0, 24);
+                drawSparkline(next24hPollution);
             }
         } catch(e) {
             console.error("Gagal memuat sparkline trend polusi", e);
         }
 
         try {
-            const weatherForecastUrl = `https://api.openweathermap.org/data/2.5/forecast?lat=${lat}&lon=${lon}&appid=${API_KEY}&units=metric&lang=id`;
+            const weatherForecastUrl = `https://api.openweathermap.org/data/2.5/forecast?lat=${lat}&lon=${lon}&appid=${API_KEY}&units=metric&lang=en`;
             const wfRes = await fetch(weatherForecastUrl);
             const wfData = await wfRes.json();
 
@@ -421,10 +679,30 @@ async function fetchRealAirData(lat, lon) {
             
             if (aqData && aqData.list && aqData.list.length > 0) {
                 updateUI(aqData.list[0]);
-                document.getElementById('status-text').innerText = "DATA SYNCED";
-                document.getElementById('status-text').classList.replace('text-g-green-medium', 'text-g-blue-medium');
+                
+                // Set UI state ke "Synced" beserta info waktu sinkronisasi terakhir
+                let localSyncTime = new Date();
+                let gmtString = '';
+                if (isTimezoneSet) {
+                    const utcTime = localSyncTime.getTime() + (localSyncTime.getTimezoneOffset() * 60000);
+                    localSyncTime = new Date(utcTime + (currentTimezoneOffset * 1000));
+                    const offsetHours = currentTimezoneOffset / 3600;
+                    gmtString = ` GMT${offsetHours >= 0 ? '+' : ''}${offsetHours}`;
+                }
+                const syncTime = localSyncTime.toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' });
+                
+                const statusEl = document.getElementById('status-text');
+                const pingSolid = document.getElementById('ping-solid');
+                
+                statusEl.innerHTML = `DATA SYNCED <span class="text-g-grey/70 ml-1 font-sans text-[9px] sm:text-[10px] lowercase tracking-normal">(terakhir: ${syncTime}${gmtString})</span>`;
+                
+                statusEl.classList.remove('text-g-green-medium', 'text-g-red-medium');
+                statusEl.classList.add('text-g-blue-medium');
+                
                 document.getElementById('ping-dot').classList.add('hidden'); 
-                document.getElementById('ping-solid').classList.replace('bg-g-green-medium', 'bg-g-blue-medium');
+                
+                pingSolid.classList.remove('bg-g-green-medium', 'bg-g-red-medium');
+                pingSolid.classList.add('bg-g-blue-medium');
             }
         } catch(e) {
             console.error("Gagal memuat kualitas udara", e);
@@ -432,10 +710,18 @@ async function fetchRealAirData(lat, lon) {
 
     } catch (error) {
         console.error("Kesalahan jaringan:", error);
-        document.getElementById('status-text').innerText = "SYNC FAILED";
-        document.getElementById('status-text').classList.replace('text-g-green-medium', 'text-g-red-medium');
+        const statusEl = document.getElementById('status-text');
+        const pingSolid = document.getElementById('ping-solid');
+        
+        statusEl.innerHTML = `SYNC FAILED <span class="text-g-grey/70 ml-1 font-sans text-[9px] sm:text-[10px] lowercase tracking-normal">(gagal memuat)</span>`;
+        
+        statusEl.classList.remove('text-g-green-medium', 'text-g-blue-medium');
+        statusEl.classList.add('text-g-red-medium');
+        
         document.getElementById('ping-dot').classList.add('hidden');
-        document.getElementById('ping-solid').classList.replace('bg-g-green-medium', 'bg-g-red-medium');
+        
+        pingSolid.classList.remove('bg-g-green-medium', 'bg-g-blue-medium');
+        pingSolid.classList.add('bg-g-red-medium');
     }
 }
 
@@ -443,28 +729,145 @@ async function fetchRealAirData(lat, lon) {
 function initApp() {
     animateParticles();
     
+    // Bind UI Events for the Search Location Feature
+    const locHeader = document.getElementById('location-header');
+    const searchContainer = document.getElementById('location-search-container');
+    const searchInput = document.getElementById('location-input');
+    const btnSearch = document.getElementById('btn-search');
+    const btnCancelSearch = document.getElementById('btn-cancel-search');
+
+    locHeader.addEventListener('click', () => {
+        locHeader.classList.add('hidden');
+        searchContainer.classList.remove('hidden');
+        searchContainer.classList.add('flex');
+        searchInput.focus();
+    });
+
+    btnCancelSearch.addEventListener('click', () => {
+        searchContainer.classList.add('hidden');
+        searchContainer.classList.remove('flex');
+        locHeader.classList.remove('hidden');
+        searchInput.value = '';
+    });
+
+    btnSearch.addEventListener('click', () => {
+        if(searchInput.value.trim() !== '') searchLocation(searchInput.value);
+    });
+
+    searchInput.addEventListener('keypress', (e) => {
+        if(e.key === 'Enter' && searchInput.value.trim() !== '') searchLocation(searchInput.value);
+    });
+    
+    // Interactive Map Integration
+    const mapModal = document.getElementById('map-modal');
+    const btnMapToggle = document.getElementById('btn-map-toggle');
+    const btnCloseMap = document.getElementById('btn-close-map');
+    const btnCancelMap = document.getElementById('btn-cancel-map');
+    const btnConfirmMap = document.getElementById('btn-confirm-map');
+    
+    let map = null;
+    let mapMarker = null;
+    let selectedLat = null;
+    let selectedLon = null;
+
+    const openMap = () => {
+        mapModal.classList.remove('hidden');
+        if (!map) {
+            setTimeout(() => {
+                // Initialize map with CartoDB's Dark Matter tiles (styled brighter via CSS)
+                map = L.map('map-view').setView([currentLat, currentLon], 10);
+                L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+                    attribution: '&copy; <a href="https://carto.com/attributions">CARTO</a>'
+                }).addTo(map);
+
+                // Place initial marker
+                mapMarker = L.marker([currentLat, currentLon]).addTo(map);
+
+                // Setup click listener to drop new pins
+                map.on('click', function(e) {
+                    selectedLat = e.latlng.lat;
+                    selectedLon = e.latlng.lng;
+                    
+                    if (mapMarker) {
+                        map.removeLayer(mapMarker);
+                    }
+                    mapMarker = L.marker([selectedLat, selectedLon]).addTo(map);
+                    btnConfirmMap.disabled = false; // Enable confirm button
+                });
+            }, 100);
+        } else {
+            setTimeout(() => {
+                map.invalidateSize();
+                map.setView([currentLat, currentLon], 10);
+                if (mapMarker) {
+                    map.removeLayer(mapMarker);
+                }
+                mapMarker = L.marker([currentLat, currentLon]).addTo(map);
+            }, 100);
+        }
+    };
+
+    const closeMap = () => {
+        mapModal.classList.add('hidden');
+        selectedLat = null;
+        selectedLon = null;
+        btnConfirmMap.disabled = true;
+    };
+
+    // Map Event Listeners
+    if (btnMapToggle) btnMapToggle.addEventListener('click', openMap);
+    if (btnCloseMap) btnCloseMap.addEventListener('click', closeMap);
+    if (btnCancelMap) btnCancelMap.addEventListener('click', closeMap);
+    
+    if (btnConfirmMap) {
+        btnConfirmMap.addEventListener('click', async () => {
+            if (selectedLat && selectedLon) {
+                currentLat = selectedLat;
+                currentLon = selectedLon;
+                
+                searchContainer.classList.add('hidden');
+                searchContainer.classList.remove('flex');
+                locHeader.classList.remove('hidden');
+                
+                closeMap();
+                
+                const statusEl = document.getElementById('status-text');
+                const pingSolid = document.getElementById('ping-solid');
+                statusEl.innerHTML = "MENYINKRONKAN LOKASI...";
+                statusEl.classList.remove('text-g-blue-medium', 'text-g-red-medium');
+                statusEl.classList.add('text-g-green-medium');
+                document.getElementById('ping-dot').classList.remove('hidden'); 
+                pingSolid.classList.remove('bg-g-blue-medium', 'bg-g-red-medium');
+                pingSolid.classList.add('bg-g-green-medium');
+
+                document.getElementById('location-name').innerText = await fetchLocationName(currentLat, currentLon);
+                await fetchRealAirData(currentLat, currentLon);
+                startAutoSync();
+            }
+        });
+    }
+
+    // Initial Geolocation setup
     if (navigator.geolocation) {
         navigator.geolocation.getCurrentPosition(
             async (position) => {
-                const lat = position.coords.latitude;
-                const lon = position.coords.longitude;
-                document.getElementById('location-name').innerText = await fetchLocationName(lat, lon);
-                await fetchRealAirData(lat, lon);
+                currentLat = position.coords.latitude;
+                currentLon = position.coords.longitude;
+                document.getElementById('location-name').innerText = await fetchLocationName(currentLat, currentLon);
+                await fetchRealAirData(currentLat, currentLon);
+                startAutoSync(); 
             },
             async (err) => {
                 console.warn('Geolocation ditolak/error, menggunakan lokasi default (Jakarta).');
-                const defaultLat = -6.2088;
-                const defaultLon = 106.8456;
                 document.getElementById('location-name').innerText = "Jakarta (Default)";
-                await fetchRealAirData(defaultLat, defaultLon);
+                await fetchRealAirData(currentLat, currentLon);
+                startAutoSync(); 
             }
         );
     } else {
         console.warn('Geolocation tidak didukung, menggunakan lokasi default (Jakarta).');
-        const defaultLat = -6.2088;
-        const defaultLon = 106.8456;
         document.getElementById('location-name').innerText = "Jakarta (Default)";
-        fetchRealAirData(defaultLat, defaultLon);
+        fetchRealAirData(currentLat, currentLon).then(() => startAutoSync());
     }
 }
 

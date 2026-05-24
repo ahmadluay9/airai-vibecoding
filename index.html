@@ -8,6 +8,9 @@
     <link rel="icon" type="image/x-icon" href="/favicon.ico">
         
     <link rel="stylesheet" href="/src/styles/main.css">
+        <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+
 </head>
 
 <body id="body-bg" class="font-sans flex items-center justify-center min-h-screen p-4">
@@ -25,8 +28,21 @@
         </div>
 
         <header class="flex justify-between items-start mb-2">
-            <div>
-                <h1 class="text-2xl sm:text-3xl font-bold tracking-tight text-g-grey-light" id="location-name">Mendeteksi Lokasi...</h1>
+            <div class="flex-1 pr-4">
+                
+                <!-- Clickable Header with Edit Icon -->
+                <div class="flex items-center gap-2 group cursor-pointer w-[fit-content]" id="location-header" data-tooltip="Klik untuk ubah lokasi">
+                    <h1 class="text-2xl sm:text-3xl font-bold tracking-tight text-g-grey-light" id="location-name">Mendeteksi Lokasi...</h1>
+                    <svg class="w-4 h-4 sm:w-5 sm:h-5 text-g-grey opacity-50 group-hover:opacity-100 transition-opacity shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
+                </div>
+                
+                <!-- Hidden Search Container -->
+                <div id="location-search-container" class="hidden items-center gap-2 mb-1 mt-1">
+                    <input type="text" id="location-input" placeholder="Cari kota..." class="bg-g-black/40 border border-g-grey-light/20 rounded-md px-3 py-1.5 text-sm text-g-grey-light focus:outline-none focus:border-g-blue-medium w-full max-w-[200px]">
+                    <button id="btn-search" class="bg-g-blue-medium hover:bg-g-blue text-white px-3 py-1.5 rounded-md text-sm font-medium transition-colors">Cari</button>
+                    <button id="btn-map-toggle" class="bg-g-grey hover:bg-g-grey-light/20 text-white px-2 py-1.5 rounded-md text-sm font-medium transition-colors" data-tooltip="Pilih via Peta">📍</button>
+                    <button id="btn-cancel-search" class="bg-g-grey hover:bg-g-grey-light/20 text-white px-2 py-1.5 rounded-md text-sm font-medium transition-colors">✕</button>
+                </div>
                 
                 <p class="text-xs sm:text-sm text-g-grey font-medium tracking-wide mt-1" id="current-datetime">Memuat waktu...</p>
                 
@@ -39,12 +55,13 @@
                         <p class="text-[10px] sm:text-xs text-g-green-medium font-mono tracking-wider" id="status-text">ACQUIRING GPS SIGNAL...</p>
                     </div>
                     <span class="hidden sm:inline text-g-grey">|</span>
-                    <p class="text-[10px] sm:text-xs text-g-blue-medium font-mono tracking-wider flex items-center gap-1" id="weather-status">
+                    <p class="text-[10px] sm:text-xs text-g-blue-medium font-mono tracking-wider flex items-center gap-1 tooltip-bottom" id="weather-status" data-tooltip="Kondisi cuaca terkini">
                         <span class="opacity-50">MENDETEKSI CUACA...</span>
                     </p>
                 </div>
             </div>
-            <div class="text-right">
+            
+            <div class="text-right tooltip-bottom shrink-0" data-tooltip="Air Quality Index (Tingkat polusi secara keseluruhan)">
                 <div class="text-6xl sm:text-7xl font-black glow-text transition-colors duration-500" id="aqi-display">-</div>
                 <p class="text-[10px] sm:text-sm font-semibold uppercase tracking-widest text-g-grey mt-1">AQI Level</p>
             </div>
@@ -57,7 +74,7 @@
         </div>
 
         <!-- Sparkline Trend PM2.5 -->
-        <div class="border border-g-grey-light/10 rounded-xl p-4 bg-g-black/40 shadow-inner transition-all hover:bg-g-black/60">
+        <div class="border border-g-grey-light/10 rounded-xl p-4 bg-g-black/40 shadow-inner transition-all hover:bg-g-black/60 relative">
             <div class="flex justify-between items-center mb-2">
                 <span class="text-[10px] sm:text-xs font-bold text-g-grey uppercase tracking-wider">Tren Prediksi PM2.5 (24 Jam)</span>
                 <span class="text-[10px] text-g-blue-medium animate-pulse">● Live Forecast</span>
@@ -79,8 +96,11 @@
 
         <!-- Gemini AI Integration Section -->
         <div class="border-t border-g-grey-light/10 pt-4">
-            <button id="btn-ai" class="w-full bg-g-blue/80 hover:bg-g-blue-medium text-g-grey-light font-semibold py-3 px-4 rounded-xl shadow-lg shadow-g-blue-medium/30 transition-all duration-300 flex justify-center items-center gap-2 group border border-g-blue-light/30 hidden">
-                <span class="group-hover:scale-110 transition-transform">✨</span> Analisis Vibe Udara AI
+            <button id="btn-ai" class="w-full bg-g-black-alt hover:bg-g-black-hover text-white font-semibold py-3 px-4 rounded-xl shadow-lg shadow-g-black-alt/30 transition-all duration-300 flex justify-center items-center gap-2 group border border-g-grey/30 hidden">
+                <span class="group-hover:scale-110 transition-transform flex items-center">
+                    <img src="https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/google-gemini.svg" alt="Gemini Logo" class="w-5 h-5" />
+                </span> 
+                Analisis Vibe Udara dengan Gemini
             </button>
             
             <div id="ai-response-container" class="hidden mt-4 bg-g-black/80 rounded-xl p-4 border border-g-blue-medium/30 shadow-inner">
@@ -92,6 +112,21 @@
             </div>
         </div>
     </main>
+
+    <!-- Map Modal -->
+    <div id="map-modal" class="hidden fixed inset-0 z-[1000] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+        <div class="bg-g-black border border-g-grey-light/20 rounded-2xl shadow-2xl w-full max-w-3xl overflow-hidden flex flex-col">
+            <div class="p-4 border-b border-g-grey-light/10 flex justify-between items-center bg-g-black/90">
+                <h2 class="text-lg font-bold text-g-grey-light font-sans">Pilih Lokasi di Peta</h2>
+                <button id="btn-close-map" class="text-g-grey hover:text-white transition-colors p-1">✕</button>
+            </div>
+            <div id="map-view" class="w-full h-[400px] sm:h-[500px] z-[1010]"></div>
+            <div class="p-4 border-t border-g-grey-light/10 flex justify-end gap-3 bg-g-black/90">
+                <button id="btn-cancel-map" class="px-4 py-2 text-sm font-medium text-g-grey hover:text-white transition-colors">Batal</button>
+                <button id="btn-confirm-map" class="bg-g-blue-medium hover:bg-g-blue text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed" disabled>Konfirmasi Lokasi</button>
+            </div>
+        </div>
+    </div>
 
     <!-- Link to your modular JavaScript entry point -->
     <script type="module" src="/src/js/main.js"></script>

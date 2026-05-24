@@ -23,6 +23,10 @@
     --color-g-grey-light: #F1F3F4;
     --color-g-grey: #9AA0A6;
     --color-g-black: #202124;
+
+    /* Custom Button Colors */
+    --color-g-black-alt: #0e0e0e;
+    --color-g-black-hover: #1e1f20;
 }
 
 /* =========================================
@@ -115,6 +119,75 @@
         border-color: color-mix(in srgb, var(--color-g-red-medium) 40%, transparent); 
         box-shadow: 0 0 50px color-mix(in srgb, var(--color-g-red-medium) 20%, transparent); 
     }
+
+    /* Map Tile Filter for Brighter Fonts, Roads, and Borders */
+    #map-view .leaflet-tile-pane {
+        filter: brightness(2) contrast(1.1) saturate(1.2);
+    }
+
+    /* Interactive CSS Tooltips - Default (Pops UP) */
+    [data-tooltip] {
+        position: relative;
+        cursor: help;
+    }
+    
+    [data-tooltip]::after {
+        content: attr(data-tooltip);
+        position: absolute;
+        bottom: 100%;
+        left: 50%;
+        transform: translateX(-50%) translateY(4px);
+        background-color: var(--color-g-black);
+        color: var(--color-g-grey-light);
+        padding: 6px 12px;
+        border-radius: 6px;
+        font-size: 0.75rem;
+        font-weight: 500;
+        white-space: normal;
+        max-width: 220px;
+        text-align: center;
+        opacity: 0;
+        visibility: hidden;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        z-index: 50;
+        pointer-events: none;
+        border: 1px solid color-mix(in srgb, var(--color-g-grey-light) 15%, transparent);
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.5);
+    }
+    
+    [data-tooltip]:hover::after {
+        opacity: 1;
+        visibility: visible;
+        transform: translateX(-50%) translateY(-8px);
+    }
+
+    /* Modifier: Shift tooltips on right-aligned items */
+    .text-right[data-tooltip]::after {
+        left: auto;
+        right: 0;
+        transform: translateX(0) translateY(4px);
+    }
+    .text-right[data-tooltip]:hover::after {
+        transform: translateX(0) translateY(-8px);
+    }
+
+    /* Modifier: Make Tooltip Pop DOWNWARDS (For top-edge elements) */
+    .tooltip-bottom[data-tooltip]::after {
+        bottom: auto;
+        top: 100%;
+        transform: translateX(-50%) translateY(-4px);
+    }
+    .tooltip-bottom[data-tooltip]:hover::after {
+        transform: translateX(-50%) translateY(8px);
+    }
+
+    /* Modifier: Right-aligned + Bottom Tooltip */
+    .text-right.tooltip-bottom[data-tooltip]::after {
+        transform: translateX(0) translateY(-4px);
+    }
+    .text-right.tooltip-bottom[data-tooltip]:hover::after {
+        transform: translateX(0) translateY(8px);
+    }
 }
 
 @layer utilities {
@@ -144,6 +217,7 @@ body.theme-day .glass-panel {
 /* Specific text overrides for Day theme */
 body.theme-day .text-g-grey-light { color: var(--color-g-black) !important; }
 body.theme-day .text-g-grey { color: var(--color-g-grey) !important; }
+body.theme-day #btn-ai { color: #ffffff !important; }
 
 /* Override card backgrounds for Day theme */
 body.theme-day .bg-g-grey-light\/5 { 
@@ -167,7 +241,15 @@ body.theme-day .danger-panel {
 
 /* High Contrast AQI overrides for Light Mode */
 body.theme-day .aqi-1 { color: var(--color-g-green); }
-body.theme-day .aqi-2 { color: #D19D00; } /* Darkened Google Yellow for legibility */
+body.theme-day .aqi-2 { color: #D19D00; }
 body.theme-day .aqi-3 { color: var(--color-g-orange); }
 body.theme-day .aqi-4 { color: var(--color-g-red-medium); }
 body.theme-day .aqi-5 { color: var(--color-g-red); }
+
+/* Day Mode Tooltip Override */
+body.theme-day [data-tooltip]::after {
+    background-color: var(--color-g-grey-light);
+    color: var(--color-g-black);
+    border-color: color-mix(in srgb, var(--color-g-black) 15%, transparent);
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.15);
+}
