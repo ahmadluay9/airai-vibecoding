@@ -13,6 +13,72 @@ let syncIntervalId = null;
 let currentTimezoneOffset = 0;
 let isTimezoneSet = false;
 
+// --- GLOBAL TOOLTIP SYSTEM ---
+let globalTooltip = null;
+
+function initGlobalTooltip() {
+    globalTooltip = document.createElement('div');
+    globalTooltip.id = 'global-tooltip';
+    // Fixed positioning escapes all overflow clipping containers
+    globalTooltip.className = 'fixed hidden py-1.5 px-3 rounded-lg text-xs font-medium whitespace-normal max-w-[220px] text-center z-[9999] pointer-events-none drop-shadow-xl transition-opacity duration-150';
+    document.body.appendChild(globalTooltip);
+
+    document.addEventListener('mouseover', (e) => {
+        const target = e.target.closest('[data-js-tooltip]');
+        if (target) {
+            const text = target.getAttribute('data-js-tooltip');
+            if (!text) return;
+            
+            globalTooltip.innerHTML = text;
+            
+            // Adapt to the current Theme
+            if (document.body.classList.contains('theme-day')) {
+                globalTooltip.style.backgroundColor = '#F1F3F4';
+                globalTooltip.style.color = '#202124';
+                globalTooltip.style.border = '1px solid rgba(32, 33, 36, 0.15)';
+            } else {
+                globalTooltip.style.backgroundColor = '#202124';
+                globalTooltip.style.color = '#F1F3F4';
+                globalTooltip.style.border = '1px solid rgba(241, 243, 244, 0.15)';
+            }
+            
+            globalTooltip.classList.remove('hidden');
+            globalTooltip.style.opacity = '1';
+        }
+    });
+
+    document.addEventListener('mousemove', (e) => {
+        if (!globalTooltip.classList.contains('hidden')) {
+            // Smart Positioning: Pop down if near the top of the browser, pop up otherwise
+            if (e.clientY < 60) {
+                globalTooltip.style.transform = 'translate(-50%, 15px)';
+            } else {
+                globalTooltip.style.transform = 'translate(-50%, calc(-100% - 10px))';
+            }
+            globalTooltip.style.left = `${e.clientX}px`;
+            globalTooltip.style.top = `${e.clientY}px`;
+        }
+    });
+
+    document.addEventListener('mouseout', (e) => {
+        const target = e.target.closest('[data-js-tooltip]');
+        if (target) {
+            globalTooltip.classList.add('hidden');
+            globalTooltip.style.opacity = '0';
+        }
+    });
+}
+
+// Convert HTML CSS-tooltips to JS-tooltips automatically
+function convertHTMLTooltips() {
+    document.querySelectorAll('[data-tooltip]').forEach(el => {
+        el.setAttribute('data-js-tooltip', el.getAttribute('data-tooltip'));
+        el.removeAttribute('data-tooltip');
+        el.classList.add('cursor-help');
+    });
+}
+
+
 function updateDateTime() {
     const now = new Date();
     let localTime = now;
@@ -244,10 +310,10 @@ function updateUI(data) {
         const highlightClass = m.highlight ? 'text-g-red-medium glow-text' : 'text-g-grey-light';
         const tooltipText = metricDescriptions[m.label] || '';
         grid.innerHTML += `
-            <div data-tooltip="${tooltipText}" class="stat-card border border-g-grey-light/10 bg-g-grey-light/5 rounded-xl p-3 sm:p-4 flex flex-col items-center justify-center gap-1 relative">
-                <span class="text-[10px] sm:text-xs font-bold text-g-grey uppercase tracking-wider">${m.label}</span>
-                <span class="text-xl sm:text-2xl font-medium ${highlightClass}">${m.value}</span>
-                <span class="text-[9px] sm:text-[10px] text-g-grey/80">µg/m³</span>
+            <div data-js-tooltip="${tooltipText}" class="stat-card border border-g-grey-light/10 bg-g-grey-light/5 rounded-xl p-3 sm:p-4 flex flex-col items-center justify-center gap-1 relative cursor-help">
+                <span class="text-[10px] sm:text-xs font-bold text-g-grey uppercase tracking-wider pointer-events-none">${m.label}</span>
+                <span class="text-xl sm:text-2xl font-medium ${highlightClass} pointer-events-none">${m.value}</span>
+                <span class="text-[9px] sm:text-[10px] text-g-grey/80 pointer-events-none">µg/m³</span>
             </div>
         `;
     });
@@ -268,8 +334,7 @@ function drawSparkline(forecastDataList) {
     if (!tooltipEl) {
         tooltipEl = document.createElement('div');
         tooltipEl.id = 'chart-tooltip';
-        // Force explicit colors for the tooltip to ensure it's visible in both modes
-        tooltipEl.className = 'absolute hidden bg-[#202124]/95 text-[#F1F3F4] text-xs py-1.5 px-2.5 rounded-lg border border-[#F1F3F4]/20 shadow-xl z-[100] pointer-events-none transform -translate-x-1/2 -translate-y-full';
+        tooltipEl.className = 'fixed hidden bg-[#202124]/95 text-[#F1F3F4] text-xs py-1.5 px-2.5 rounded-lg border border-[#F1F3F4]/20 shadow-xl z-[100] pointer-events-none transform -translate-x-1/2 -translate-y-full';
         document.body.appendChild(tooltipEl);
     }
 
@@ -314,8 +379,22 @@ function drawSparkline(forecastDataList) {
                 <div class="text-[10px] text-[#F1F3F4] mt-0.5">${timeStr}</div>
             `;
             
-            tooltipEl.style.left = `${e.pageX}px`;
-            tooltipEl.style.top = `${e.pageY - 15}px`;
+            // Force colors based on theme so chart tooltip always matches
+            if (document.body.classList.contains('theme-day')) {
+                tooltipEl.style.backgroundColor = '#F1F3F4';
+                tooltipEl.style.color = '#202124';
+                tooltipEl.style.borderColor = 'rgba(32,33,36,0.15)';
+                tooltipEl.querySelector('.text-\\[\\#D2E3FC\\]').classList.replace('text-[#D2E3FC]', 'text-g-blue-medium');
+                tooltipEl.querySelector('.text-\\[\\#9AA0A6\\]').classList.replace('text-[#9AA0A6]', 'text-g-grey');
+                tooltipEl.querySelector('.text-\\[\\#F1F3F4\\]').classList.replace('text-[#F1F3F4]', 'text-g-black');
+            } else {
+                tooltipEl.style.backgroundColor = 'rgba(32,33,36,0.95)';
+                tooltipEl.style.color = '#F1F3F4';
+                tooltipEl.style.borderColor = 'rgba(241,243,244,0.2)';
+            }
+            
+            tooltipEl.style.left = `${e.clientX}px`;
+            tooltipEl.style.top = `${e.clientY - 15}px`;
             tooltipEl.classList.remove('hidden');
             
             renderSparklineCanvas(forecastDataList, index);
@@ -615,12 +694,17 @@ async function fetchRealAirData(lat, lon) {
                     body.classList.remove('theme-day');
                 }
 
-                let icon = '☁️';
-                if (condition === 'Clear') icon = isDayTime ? '☀️' : '🌙';
-                if (condition === 'Rain' || condition === 'Drizzle') icon = '🌧️';
-                if (condition === 'Thunderstorm') icon = '⛈️';
+                // CHANGED: Use official OpenWeatherMap icon
+                const weatherIconUrl = `https://openweathermap.org/img/wn/${iconCode}@2x.png`;
 
-                document.getElementById('weather-status').innerHTML = `${icon} ${temp}°C | ${desc.toUpperCase()}`;
+                const weatherStatusEl = document.getElementById('weather-status');
+                weatherStatusEl.innerHTML = `<img src="${weatherIconUrl}" alt="${desc}" class="w-6 h-6 sm:w-7 sm:h-7 object-contain drop-shadow-sm -ml-1 inline-block pointer-events-none" /> ${temp}°C | ${desc.toUpperCase()}`;
+                
+                // Set JS Tooltip
+                weatherStatusEl.setAttribute('data-js-tooltip', `Kondisi: ${desc.charAt(0).toUpperCase() + desc.slice(1)}`);
+                weatherStatusEl.removeAttribute('data-tooltip'); // Remove CSS fallback to prevent duplicates
+                weatherStatusEl.classList.add('cursor-help');
+                
                 setWeatherCondition(condition);
             }
         } catch(e) {
@@ -654,16 +738,17 @@ async function fetchRealAirData(lat, lon) {
                     const date = new Date(item.dt * 1000);
                     const timeStr = date.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
                     
-                    let fIcon = '☁️';
-                    if (item.weather[0].main === 'Clear') fIcon = item.weather[0].icon.includes('d') ? '☀️' : '🌙';
-                    if (item.weather[0].main === 'Rain' || item.weather[0].main === 'Drizzle') fIcon = '🌧️';
-                    if (item.weather[0].main === 'Thunderstorm') fIcon = '⛈️';
+                    const fIconCode = item.weather[0].icon;
+                    const fIconUrl = `https://openweathermap.org/img/wn/${fIconCode}@2x.png`;
+                    
+                    const weatherDesc = item.weather[0].description;
+                    const formattedDesc = weatherDesc.charAt(0).toUpperCase() + weatherDesc.slice(1);
 
                     forecastContainer.innerHTML += `
-                        <div class="flex flex-col items-center min-w-[65px] bg-g-grey-light/5 rounded-lg p-2 border border-g-grey-light/10 shrink-0">
-                            <span class="text-[10px] text-g-grey">${timeStr}</span>
-                            <span class="text-xl my-1">${fIcon}</span>
-                            <span class="text-xs font-bold text-g-grey-light">${Math.round(item.main.temp)}°</span>
+                        <div data-js-tooltip="${formattedDesc}" class="flex flex-col items-center min-w-[65px] bg-g-grey-light/5 rounded-lg p-2 border border-g-grey-light/10 shrink-0 cursor-help">
+                            <span class="text-[10px] text-g-grey pointer-events-none">${timeStr}</span>
+                            <img src="${fIconUrl}" alt="${weatherDesc}" class="w-10 h-10 object-contain drop-shadow-md my-0.5 pointer-events-none" />
+                            <span class="text-xs font-bold text-g-grey-light pointer-events-none">${Math.round(item.main.temp)}°</span>
                         </div>
                     `;
                 });
@@ -727,6 +812,8 @@ async function fetchRealAirData(lat, lon) {
 
 // --- 6. INITIALIZATION LOOP ---
 function initApp() {
+    initGlobalTooltip();
+    convertHTMLTooltips();
     animateParticles();
     
     // Bind UI Events for the Search Location Feature

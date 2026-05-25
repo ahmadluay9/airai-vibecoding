@@ -209,7 +209,7 @@ body.theme-day {
 } 
 
 body.theme-day .glass-panel {
-    background: color-mix(in srgb, var(--color-g-grey-light) 75%, transparent);
+    background: #f0f0f0;
     border-color: color-mix(in srgb, var(--color-g-black) 10%, transparent);
     box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.05);
 }
