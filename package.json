@@ -1,8 +1,8 @@
 {
-  "name": "airai-vibecoding",
+  "name": "luminair",
   "version": "1.0.0",
   "type": "module",
-  "description": "napas-live-air-vibe/\r │\r ├── public/                     # Publicly accessible files (served directly)\r │   ├── index.html              # Main HTML entry point (markup only)\r │   ├── favicon.ico             # App icon\r │   └── assets/                 # Static assets\r │       └── fonts/              # Downloaded Google Fonts (if self-hosting)\r │\r ├── src/                        # Source code (pre-build)\r │   ├── styles/                 # Styling\r │   │   └── main.css            # Tailwind directives (@tailwind) & custom CSS\r │   │\r │   ├── js/                     # Modular JavaScript\r │   │   ├── main.js             # Entry point: Initialization & event listeners\r │   │   ├── api.js              # Fetch logic: OpenWeatherMap, Nominatim, Gemini\r │   │   ├── ui.js               # DOM manipulation: updateUI(), drawSparkline()\r │   │   ├── canvas.js           # Generative Art: Particle & Raindrop classes, animation loop\r │   │   └── utils.js            # Helper functions: updateDateTime(), formatting\r │   │\r │   └── config/                 # Configuration files\r │       └── theme.js            # Tailwind theme extensions (fonts, custom colors)\r │\r ├── .env                        # Environment variables (API Keys - DO NOT COMMIT)\r ├── .env.example                # Example format for .env file\r ├── .gitignore                  # Specifies intentionally untracked files to ignore (e.g., node_modules, .env)\r ├── package.json                # Project metadata & npm scripts (e.g., \"start\", \"build\")\r ├── tailwind.config.js          # Local Tailwind CSS configuration\r └── README.md                   # Project documentation and setup instructions",
+  "description": "Luminair: The smart pulse of your environment. A live air quality and weather visualization app.",
   "main": "index.html",
   "scripts": {
     "dev": "vite",

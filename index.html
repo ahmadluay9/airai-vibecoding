@@ -3,14 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NAPAS - Live Air Vibe</title>
+    <title>Luminair - The smart pulse of your environment</title>
         
     <link rel="icon" type="image/x-icon" href="/favicon.ico">
         
     <link rel="stylesheet" href="/src/styles/main.css">
-        <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
-
 </head>
 
 <body id="body-bg" class="font-sans flex items-center justify-center min-h-screen p-4">
@@ -70,6 +69,19 @@
         </header>
 
         <div class="w-full h-px bg-gradient-to-r from-transparent via-g-grey/50 to-transparent"></div>
+
+        <!-- Interactive Health Avatar -->
+        <div class="flex items-center gap-4 border border-g-grey-light/10 rounded-xl p-3 sm:p-4 bg-g-black/40 shadow-inner transition-all hover:bg-g-black/60 mt-2 mb-1 cursor-help" data-js-tooltip="Avatar bereaksi terhadap kondisi udara dan cuaca saat ini">
+            <div id="avatar-emoji" class="animate-float drop-shadow-lg select-none flex justify-center w-12 sm:w-14">
+                <div class="relative inline-block">
+                    <img src="/src/assets/icons/neutral.png" alt="Health Avatar" class="w-10 h-10 sm:w-12 sm:h-12 object-contain opacity-50" />
+                </div>
+            </div>
+            <div class="flex flex-col">
+                <span class="text-[10px] sm:text-xs font-bold text-g-grey uppercase tracking-wider">Health Vibe</span>
+                <span id="avatar-message" class="text-xs sm:text-sm font-medium text-g-grey-light mt-0.5 leading-snug">Memindai kondisi biosfer...</span>
+            </div>
+        </div>
 
         <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 mt-2" id="components-grid">
             <!-- Data Cards injected here -->
@@ -136,6 +148,12 @@
             </div>
         </div>
     </div>
+
+    <!-- Floating Audio Toggle -->
+    <button id="btn-audio-toggle" class="fixed bottom-6 right-6 bg-g-black/80 hover:bg-g-black text-white p-3.5 rounded-full shadow-2xl border border-g-grey-light/10 z-[100] transition-transform duration-300 hover:scale-110 backdrop-blur-md group cursor-pointer" data-js-tooltip="Aktifkan Ambient Sound">
+        <svg id="icon-audio-off" class="w-6 h-6 text-g-grey group-hover:text-white transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2"></path></svg>
+        <svg id="icon-audio-on" class="w-6 h-6 text-g-blue-medium hidden animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"></path></svg>
+    </button>
 
     <!-- Link to your modular JavaScript entry point -->
     <script type="module" src="/src/js/main.js"></script>

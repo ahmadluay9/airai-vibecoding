@@ -198,36 +198,80 @@
         -ms-overflow-style: none;
         scrollbar-width: none;
     }
+    
+    /* ADDED: Smooth floating animation for the avatar */
+    @keyframes float {
+        0%, 100% { transform: translateY(0); }
+        50% { transform: translateY(-5px); }
+    }
+    .animate-float {
+        animation: float 3s ease-in-out infinite;
+    }
+}
+
+/* Night Mode (Default) Card Hover Adjustments */
+body:not(.theme-day) .hover\:bg-g-black\/60:hover,
+body:not(.theme-day) .bg-g-black\/40:hover {
+    background-color: color-mix(in srgb, var(--color-g-grey-light) 8%, transparent) !important;
+    border-color: color-mix(in srgb, var(--color-g-grey-light) 15%, transparent) !important;
+}
+
+/* Specific hover effect for stat cards (PM2.5, PM10, etc.) in night mode */
+body:not(.theme-day) .stat-card:hover {
+    background-color: color-mix(in srgb, var(--color-g-grey-light) 12%, transparent) !important;
+    border-color: color-mix(in srgb, var(--color-g-grey-light) 25%, transparent) !important;
 }
 
 /* =========================================
    4. Theming (Siang / Day Mode Overrides)
    ========================================= */
 body.theme-day { 
-    background-color: var(--color-g-grey-light); 
+    background-color: #E8EAED; /* Slightly darker than pure white/light-grey */
     color: var(--color-g-black); 
 } 
 
 body.theme-day .glass-panel {
-    background: #f0f0f0;
-    border-color: color-mix(in srgb, var(--color-g-black) 10%, transparent);
-    box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.05);
+    background: rgba(255, 255, 255, 0.85); /* Whiter, translucent glass */
+    border-color: rgba(0, 0, 0, 0.12); /* Slightly stronger outline */
+    box-shadow: 0 12px 40px -10px rgba(32, 33, 36, 0.1); /* Deeper, softer shadow */
 }
 
 /* Specific text overrides for Day theme */
 body.theme-day .text-g-grey-light { color: var(--color-g-black) !important; }
-body.theme-day .text-g-grey { color: var(--color-g-grey) !important; }
+body.theme-day .text-g-grey { 
+    color: #5F6368 !important; /* Deepened from #9AA0A6 for better contrast */
+    font-weight: 500; /* Optional: adds a slight weight bump for smaller labels */
+}
 body.theme-day #btn-ai { color: #ffffff !important; }
 
-/* Override card backgrounds for Day theme */
+/* Override card backgrounds for Day theme (The White Boxes) */
 body.theme-day .bg-g-grey-light\/5 { 
-    background-color: color-mix(in srgb, var(--color-g-black) 5%, transparent) !important; 
-    border-color: color-mix(in srgb, var(--color-g-black) 5%, transparent) !important; 
+    background-color: #ffffff !important; 
+    border: 1px solid rgba(0, 0, 0, 0.08) !important; /* Defines the card edges */
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04); /* Subtle lift */
 }
-body.theme-day .bg-g-black\/40 { background-color: color-mix(in srgb, var(--color-g-grey-light) 60%, transparent) !important; }
-body.theme-day .hover\:bg-g-black\/60:hover { background-color: color-mix(in srgb, var(--color-g-grey-light) 90%, transparent) !important; }
-body.theme-day .bg-g-black\/80 { background-color: color-mix(in srgb, var(--color-g-grey-light) 80%, transparent) !important; }
-body.theme-day .border-g-grey-light\/10 { border-color: color-mix(in srgb, var(--color-g-black) 10%, transparent) !important; }
+
+body.theme-day .stat-card:hover { 
+    background-color: #F1F3F4 !important; /* Forces hover color over the white background */
+}
+
+body.theme-day .bg-g-black\/40 { 
+    background-color: #ffffff !important; 
+    border: 1px solid rgba(0, 0, 0, 0.08) !important; /* Base border for cards */
+}
+
+/* Explicitly target the base class with :hover for reliable light mode interactions */
+body.theme-day .bg-g-black\/40:hover { 
+    background-color: #F1F3F4 !important; /* Better hover state contrast */
+    border-color: rgba(0, 0, 0, 0.15) !important;
+}
+
+body.theme-day .bg-g-black\/80 { 
+    background-color: #ffffff !important; 
+}
+body.theme-day .border-g-grey-light\/10 { 
+    border-color: color-mix(in srgb, var(--color-g-black) 8%, transparent) !important; 
+}
 
 /* Danger Vibe Siang */
 body.theme-day.danger-vibe { 
@@ -240,7 +284,10 @@ body.theme-day .danger-panel {
 }
 
 /* High Contrast AQI overrides for Light Mode */
-body.theme-day .aqi-1 { color: var(--color-g-green); }
+body.theme-day .aqi-1 { 
+    color: #0F9D58; 
+    text-shadow: none; /* Keep edges crisp in light mode */
+}
 body.theme-day .aqi-2 { color: #D19D00; }
 body.theme-day .aqi-3 { color: var(--color-g-orange); }
 body.theme-day .aqi-4 { color: var(--color-g-red-medium); }
@@ -252,4 +299,15 @@ body.theme-day [data-tooltip]::after {
     color: var(--color-g-black);
     border-color: color-mix(in srgb, var(--color-g-black) 15%, transparent);
     box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.15);
+}
+
+/* Fix for all weather icons visibility */
+body.theme-day #weather-status img,
+body.theme-day #weather-forecast-container img {
+    filter: drop-shadow(0px 3px 6px rgba(0, 0, 0, 0.5));
+}
+
+body:not(.theme-day) #weather-status img,
+body:not(.theme-day) #weather-forecast-container img {
+    filter: drop-shadow(0px 2px 5px rgba(255, 255, 255, 0.25));
 }
