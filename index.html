@@ -25,13 +25,27 @@
     <header class="w-full bg-white/90 backdrop-blur-md border-b border-g-grey-light px-6 sm:px-10 py-4 flex flex-col md:flex-row justify-between items-center gap-4 relative z-10 card-shadow">
         <!-- Logo Area -->
         <div class="flex items-center gap-3">
-            <div class="w-12 h-12 rounded-xl bg-g-black flex items-center justify-center p-2 shadow-sm">
-                <img src="/src/assets/icons/luminair-icon.png" alt="Luminair" class="w-full h-full object-contain" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';" />
-                <svg class="w-6 h-6 text-g-blue-medium hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A4 4 0 002 11V9a2 2 0 00-2-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 002-2m-6 9v-1a5 5 0 015-5h1a5 5 0 015 5v1a2 2 0 01-2 2H5a2 2 0 01-2-2z"></path></svg>
+            <div class="w-12 h-12 rounded-xl bg-g-black flex items-center justify-center overflow-hidden shadow-sm">
+                <img 
+                    src="/src/assets/icons/luminair-icon.png" 
+                    alt="Luminair" 
+                    class="w-full h-full object-cover"
+                    onerror="this.style.display='none'; this.nextElementSibling.style.display='block';" 
+                />
+                <svg class="w-6 h-6 text-g-blue-medium hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A4 4 0 002 11V9a2 2 0 00-2-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 002-2m-6 9v-1a5 5 0 015-5h1a5 5 0 015 5v1a2 2 0 01-2 2H5a2 2 0 01-2-2z"></path>
+                </svg>
             </div>
+
             <div>
-                <div class="text-[10px] font-bold text-g-blue tracking-widest uppercase flex items-center gap-2">Luminair <span class="bg-g-grey-light text-g-grey-dark px-1.5 py-0.5 rounded">V1.5</span></div>
-                <h1 class="text-xl sm:text-2xl font-black tracking-tight text-g-black leading-none mt-1">The smart pulse of your environment</h1>
+                <div class="text-[10px] font-bold text-g-blue tracking-widest uppercase flex items-center gap-2">
+                    Luminair 
+                    <span class="bg-g-grey-light text-g-grey-dark px-1.5 py-0.5 rounded">V1.5</span>
+                </div>
+
+                <h1 class="text-xl sm:text-2xl font-black tracking-tight text-g-black leading-none mt-1">
+                    The smart pulse of your environment
+                </h1>
             </div>
         </div>
         
