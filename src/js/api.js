@@ -102,6 +102,13 @@ export async function fetchRealAirData(lat, lon) {
         const windDir = compassDirs[Math.round(windDeg / 45) % 8];
         const humidity = weatherData.main?.humidity || 0;
         
+        // Extract new extended data points
+        const feelsLike = weatherData.main?.feels_like || 0;
+        const pressure = weatherData.main?.pressure || 0;
+        const visibility = weatherData.visibility || 0;
+        const sunrise = weatherData.sys?.sunrise || 0;
+        const sunset = weatherData.sys?.sunset || 0;
+
         // Fetch Live UV Index using the provided API endpoint
         let uvIndex = 0;
         try {
@@ -125,15 +132,71 @@ export async function fetchRealAirData(lat, lon) {
         }
 
         const envWind = document.getElementById('env-wind');
-        if (envWind) envWind.innerText = `${windDir} ${windSpeed.toFixed(1)} m/s`;
+        if (envWind) {
+            envWind.innerText = `${windDir} ${windSpeed.toFixed(1)} m/s`;
+            let windLevel = windSpeed < 5 ? "light (0-5 m/s)" : (windSpeed <= 10 ? "moderate (5-10 m/s)" : "strong (>10 m/s)");
+            envWind.setAttribute('data-js-tooltip', `Wind: ${windSpeed.toFixed(1)} m/s<br><span class='text-[10px] text-g-grey'>Level: ${windLevel}</span>`);
+        }
         
         const envHumidity = document.getElementById('env-humidity');
-        if (envHumidity) envHumidity.innerText = `${humidity}%`;
+        if (envHumidity) {
+            envHumidity.innerText = `${humidity}%`;
+            let humLevel = humidity < 30 ? "dry (<30%)" : (humidity <= 50 ? "comfortable (30-50%)" : (humidity <= 70 ? "moderate (50-70%)" : "high (>70%)"));
+            envHumidity.setAttribute('data-js-tooltip', `Humidity: ${humidity}%<br><span class='text-[10px] text-g-grey'>Level: ${humLevel}</span>`);
+        }
         
+        // Update extended tiles
+        const envFeelsLike = document.getElementById('env-feels-like');
+        if (envFeelsLike) {
+            envFeelsLike.innerText = `${Math.round(feelsLike)}°C`;
+            let tempLevel = feelsLike < 15 ? "cold (<15°C)" : (feelsLike <= 25 ? "comfortable (15-25°C)" : (feelsLike <= 32 ? "warm (25-32°C)" : "hot (>32°C)"));
+            envFeelsLike.setAttribute('data-js-tooltip', `Feels Like: ${Math.round(feelsLike)}°C<br><span class='text-[10px] text-g-grey'>Level: ${tempLevel}</span>`);
+        }
+        
+        const envPressure = document.getElementById('env-pressure');
+        if (envPressure) {
+            envPressure.innerText = `${pressure} hPa`;
+            let pressLevel = pressure < 1000 ? "low (<1000 hPa)" : (pressure <= 1020 ? "normal (1000-1020 hPa)" : "high (>1020 hPa)");
+            envPressure.setAttribute('data-js-tooltip', `Pressure: ${pressure} hPa<br><span class='text-[10px] text-g-grey'>Level: ${pressLevel}</span>`);
+        }
+        
+        const envVisibility = document.getElementById('env-visibility');
+        if (envVisibility) {
+            let visKm = visibility / 1000;
+            envVisibility.innerText = `${visKm.toFixed(1)} km`;
+            let visLevel = visKm < 5 ? "poor (<5 km)" : (visKm <= 10 ? "good (5-10 km)" : "excellent (>10 km)");
+            envVisibility.setAttribute('data-js-tooltip', `Visibility: ${visKm.toFixed(1)} km<br><span class='text-[10px] text-g-grey'>Level: ${visLevel}</span>`);
+        }
+
+        const envSunrise = document.getElementById('env-sunrise');
+        if (envSunrise && sunrise) {
+            let sunriseDate = new Date(sunrise * 1000);
+            if (state.isTimezoneSet) {
+                sunriseDate = new Date(sunriseDate.getTime() + (sunriseDate.getTimezoneOffset() * 60000) + (state.currentTimezoneOffset * 1000));
+            }
+            const sunriseTime = sunriseDate.toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit' });
+            envSunrise.innerText = sunriseTime;
+            envSunrise.setAttribute('data-js-tooltip', `Sunrise Time<br><span class='text-[10px] text-g-grey'>Local timezone</span>`);
+        }
+
+        const envSunset = document.getElementById('env-sunset');
+        if (envSunset && sunset) {
+            let sunsetDate = new Date(sunset * 1000);
+            if (state.isTimezoneSet) {
+                sunsetDate = new Date(sunsetDate.getTime() + (sunsetDate.getTimezoneOffset() * 60000) + (state.currentTimezoneOffset * 1000));
+            }
+            const sunsetTime = sunsetDate.toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit' });
+            envSunset.innerText = sunsetTime;
+            envSunset.setAttribute('data-js-tooltip', `Sunset Time<br><span class='text-[10px] text-g-grey'>Local timezone</span>`);
+        }
+
         const envUv = document.getElementById('env-uv');
         if (envUv) {
             envUv.innerText = uvIndex;
-            envUv.className = `text-xl font-bold mt-1 ${uvIndex >= 8 ? 'text-g-red-medium' : (uvIndex >= 5 ? 'text-g-orange' : 'text-g-black')}`;
+            // Keeps typography classes identical to Wind and Humidity while changing color
+            envUv.className = `text-xs font-bold leading-none cursor-help border-b border-dashed border-g-grey/60 pb-px ${uvIndex >= 8 ? 'text-g-red-medium' : (uvIndex >= 5 ? 'text-g-orange' : 'text-g-black')}`;
+            let uvLevel = uvIndex <= 2 ? "low (0-2)" : (uvIndex <= 5 ? "moderate (3-5)" : (uvIndex <= 7 ? "high (6-7)" : (uvIndex <= 10 ? "very high (8-10)" : "extreme (11+)")));
+            envUv.setAttribute('data-js-tooltip', `UV Index: ${uvIndex}<br><span class='text-[10px] text-g-grey'>Level: ${uvLevel}</span>`);
         }
     }
 
@@ -147,11 +210,12 @@ export async function fetchRealAirData(lat, lon) {
         const headerSync = document.getElementById('header-sync');
         if (headerSync) {
             const dateOpts = { month: 'short', day: 'numeric', year: 'numeric' };
-            const timeOpts = { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' };
+            const timeOpts = { hour12: false, hour: '2-digit', minute: '2-digit' }; // Removed seconds for cleaner UI
             const dateStr = localSyncTime.toLocaleDateString('en-US', dateOpts);
             const timeStr = localSyncTime.toLocaleTimeString('en-US', timeOpts);
             
-            headerSync.innerText = `(Sync: ${dateStr} ${timeStr})`;
+            // Removed "(Sync: ...)" from the inner text formatting to avoid duplication
+            headerSync.innerText = `${dateStr} ${timeStr}`;
         }
     }
     

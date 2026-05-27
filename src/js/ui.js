@@ -18,7 +18,7 @@ export function updateUI(data) {
     const aqiDisplay = document.getElementById('aqi-display');
     if (aqiDisplay) {
         aqiDisplay.innerText = aqi;
-        aqiDisplay.className = `text-6xl font-black ${aqiInfo.text} leading-none tracking-tighter`;
+        aqiDisplay.className = `text-5xl font-black ${aqiInfo.text} leading-none tracking-tighter`;
     }
     
     const aqiLabel = document.getElementById('aqi-label');
@@ -27,15 +27,14 @@ export function updateUI(data) {
         aqiLabel.className = `text-sm font-bold ${aqiInfo.text} mt-2 bg-white px-3 py-0.5 rounded-full border ${aqiInfo.border}`;
     }
 
-    const aqiAlert = document.getElementById('aqi-alert');
-    if (aqiAlert) {
-        if (aqi >= 4) {
-            aqiAlert.classList.remove('hidden');
-            aqiAlert.className = `mt-6 p-4 rounded-lg flex items-start gap-3 text-sm font-medium border ${aqiInfo.bg} ${aqiInfo.border} ${aqiInfo.text}`;
-            aqiAlert.innerHTML = `<svg class="w-5 h-5 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg><span>Members of sensitive groups may experience health effects. Restrict extensive physical drill outdoors.</span>`;
-        } else {
-            aqiAlert.classList.add('hidden');
-        }
+    const aqiDetailsContainer = document.getElementById('aqi-details-container');
+    const aqiDescription = document.getElementById('aqi-description');
+    const aqiAdviceText = document.getElementById('aqi-advice-text');
+    
+    if (aqiDetailsContainer && aqiDescription && aqiAdviceText) {
+        aqiDescription.innerText = aqiInfo.desc;
+        aqiAdviceText.innerText = aqiInfo.advice;
+        aqiDetailsContainer.classList.remove('opacity-0');
     }
     
     // Pollutants mapped to Google Colors

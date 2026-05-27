@@ -11,393 +11,418 @@
     <link rel="stylesheet" href="/src/styles/main.css">
 </head>
 
-<body id="body-bg" class="font-sans antialiased text-g-black bg-[#F8F9FA] min-h-screen relative">
+<body id="body-bg" class="font-sans antialiased text-g-black bg-[#F8F9FA] h-screen w-screen overflow-hidden flex flex-col relative">
     
     <!-- Retained Background Feature -->
     <canvas id="canvas-container"></canvas>
 
     <!-- Top Alert Banner -->
-    <div class="w-full bg-g-black text-g-grey-light text-[10px] py-1.5 text-center font-mono tracking-wide relative z-10">
+    <div class="w-full bg-g-black text-g-grey-light text-[9px] py-1 text-center font-mono tracking-wide relative z-10 shrink-0">
         <span class="text-g-blue-medium mr-1">●</span> WHO chemical guidelines updated. Check specific pollutant levels for safety updates.
     </div>
 
-    <!-- Header Navigation -->
-    <header class="w-full bg-white/90 backdrop-blur-md border-b border-g-grey-light px-6 sm:px-10 py-4 flex flex-col md:flex-row justify-between items-center gap-4 relative z-10 card-shadow">
+    <!-- Compact Header Navigation -->
+    <header class="w-full bg-white/90 backdrop-blur-md border-b border-g-grey-light px-4 py-2 flex flex-row justify-between items-center gap-4 relative z-10 card-shadow shrink-0">
         <!-- Logo Area -->
         <div class="flex items-center gap-3">
-            <div class="w-12 h-12 rounded-xl bg-g-black flex items-center justify-center overflow-hidden shadow-sm">
-                <img 
-                    src="/src/assets/icons/luminair-icon.png" 
-                    alt="Luminair" 
-                    class="w-full h-full object-cover"
-                    onerror="this.style.display='none'; this.nextElementSibling.style.display='block';" 
-                />
-                <svg class="w-6 h-6 text-g-blue-medium hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A4 4 0 002 11V9a2 2 0 00-2-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 002-2m-6 9v-1a5 5 0 015-5h1a5 5 0 015 5v1a2 2 0 01-2 2H5a2 2 0 01-2-2z"></path>
-                </svg>
+            <div class="w-8 h-8 rounded-lg bg-g-black flex items-center justify-center p-1.5 shadow-sm">
+                <img src="/src/assets/icons/luminair-icon.png" alt="Luminair" class="w-full h-full object-contain" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';" />
+                <svg class="w-5 h-5 text-g-blue-medium hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A4 4 0 002 11V9a2 2 0 00-2-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 002-2m-6 9v-1a5 5 0 015-5h1a5 5 0 015 5v1a2 2 0 01-2 2H5a2 2 0 01-2-2z"></path></svg>
             </div>
-
             <div>
-                <div class="text-[10px] font-bold text-g-blue tracking-widest uppercase flex items-center gap-2">
-                    Luminair 
-                    <span class="bg-g-grey-light text-g-grey-dark px-1.5 py-0.5 rounded">V1.5</span>
-                </div>
-
-                <h1 class="text-xl sm:text-2xl font-black tracking-tight text-g-black leading-none mt-1">
-                    The smart pulse of your environment
-                </h1>
+                <div class="text-[9px] font-bold text-g-blue tracking-widest uppercase flex items-center gap-2">Luminair <span class="bg-g-grey-light text-g-grey-dark px-1 rounded">V1.5</span></div>
+                <h1 class="text-base font-black tracking-tight text-g-black leading-none mt-0.5">Live Air Dashboard</h1>
             </div>
         </div>
         
-        <!-- Search & GPS -->
-        <div class="flex items-center gap-3 w-full md:w-auto">
-            <div class="relative flex-1 md:w-80 flex items-center gap-2">
-                <div class="relative w-full">
-                    <svg class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-g-grey" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
-                    <input type="text" id="location-input" placeholder="Query any global coordinates or town..." class="w-full bg-white border border-g-grey/30 rounded-full pl-9 pr-4 py-2 text-sm text-g-grey-dark focus:outline-none focus:border-g-blue-medium focus:ring-1 focus:ring-g-blue-medium transition-shadow">
-                </div>
-                <button id="btn-map-toggle" class="group relative bg-white border border-g-grey/30 hover:bg-g-grey-light text-g-grey-dark p-2 rounded-full transition-colors flex items-center justify-center shrink-0">
-                    <img src="/src/assets/icons/map.png" alt="Map" class="w-5 h-5 opacity-80" onerror="this.src='https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/map.svg'; this.className='w-5 h-5 opacity-80';"/>
-                    
-                    <!-- CSS Native Tooltip Matching Weather Icon Styling -->
-                    <span class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none bg-g-black text-white text-xs font-bold py-1.5 px-2.5 rounded-lg border border-g-grey-dark shadow-xl z-[100] whitespace-nowrap capitalize">
-                        Open Interactive Map
-                    </span>
-                </button>
-            </div>
-            <button id="btn-sync-gps" class="bg-g-black hover:bg-[#3c4043] text-white px-5 py-2 rounded-full text-sm font-semibold transition-colors flex items-center gap-2 shrink-0">
-                <svg class="w-4 h-4 text-g-blue-medium" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z"></path></svg>
-                Sync GPS
-            </button>
+        <div class="text-[9px] font-bold text-g-grey uppercase tracking-widest hidden sm:block">
+            Environmental Intelligence
         </div>
     </header>
 
-    <!-- Main Container -->
-    <main class="max-w-[1400px] mx-auto w-full relative z-10 pb-8">
+    <!-- Main Full-Screen Layout -->
+    <main class="flex-1 max-w-[1600px] mx-auto w-full relative z-10 flex flex-col min-h-0 px-4 pb-3">
         
-        <!-- Presets Row -->
-        <div class="px-6 sm:px-10 py-5 flex items-center gap-3 overflow-x-auto scrollbar-hide">
-            <span class="text-[10px] font-bold text-g-grey uppercase tracking-widest shrink-0 mr-2">Exploration Presets:</span>
-            <button class="preset-btn px-4 py-1.5 rounded-full border border-g-grey/20 bg-white/60 backdrop-blur-sm text-xs font-semibold text-g-grey-dark hover:border-g-blue-medium hover:text-g-blue transition-colors shrink-0">Singapore</button>
-            <button class="preset-btn px-4 py-1.5 rounded-full border border-g-grey/20 bg-white/60 backdrop-blur-sm text-xs font-semibold text-g-grey-dark hover:border-g-blue-medium hover:text-g-blue transition-colors shrink-0">New York</button>
-            <button class="preset-btn px-4 py-1.5 rounded-full border border-g-grey/20 bg-white/60 backdrop-blur-sm text-xs font-semibold text-g-grey-dark hover:border-g-blue-medium hover:text-g-blue transition-colors shrink-0">London</button>
-            <button class="preset-btn px-4 py-1.5 rounded-full border border-g-grey/20 bg-white/60 backdrop-blur-sm text-xs font-semibold text-g-grey-dark hover:border-g-blue-medium hover:text-g-blue transition-colors shrink-0">Tokyo</button>
-            <button class="preset-btn px-4 py-1.5 rounded-full border border-g-grey/20 bg-white/60 backdrop-blur-sm text-xs font-semibold text-g-grey-dark hover:border-g-blue-medium hover:text-g-blue transition-colors shrink-0">Jakarta</button>
+        <!-- Compact Presets Row -->
+        <div class="py-2 flex items-center gap-2 overflow-x-auto scrollbar-hide shrink-0">
+            <span class="text-[9px] font-bold text-g-grey uppercase tracking-widest shrink-0 mr-1">Presets:</span>
+            <button class="preset-btn px-3 py-1 rounded-full border border-g-grey/20 bg-white/60 backdrop-blur-sm text-[9px] font-semibold text-g-grey-dark hover:border-g-blue-medium hover:text-g-blue transition-colors shrink-0">Singapore</button>
+            <button class="preset-btn px-3 py-1 rounded-full border border-g-grey/20 bg-white/60 backdrop-blur-sm text-[9px] font-semibold text-g-grey-dark hover:border-g-blue-medium hover:text-g-blue transition-colors shrink-0">New York</button>
+            <button class="preset-btn px-3 py-1 rounded-full border border-g-grey/20 bg-white/60 backdrop-blur-sm text-[9px] font-semibold text-g-grey-dark hover:border-g-blue-medium hover:text-g-blue transition-colors shrink-0">London</button>
+            <button class="preset-btn px-3 py-1 rounded-full border border-g-grey/20 bg-white/60 backdrop-blur-sm text-[9px] font-semibold text-g-grey-dark hover:border-g-blue-medium hover:text-g-blue transition-colors shrink-0">Tokyo</button>
+            <button class="preset-btn px-3 py-1 rounded-full border border-g-grey/20 bg-white/60 backdrop-blur-sm text-[9px] font-semibold text-g-grey-dark hover:border-g-blue-medium hover:text-g-blue transition-colors shrink-0">Jakarta</button>
         </div>
 
-        <!-- Dashboard Grid Row 1 -->
-        <div class="px-6 sm:px-10 grid grid-cols-1 lg:grid-cols-12 gap-6">
+        <!-- Main Grid Layout -->
+        <div class="flex-1 grid grid-cols-1 lg:grid-cols-12 gap-3 min-h-0 overflow-hidden pb-1">
             
-            <!-- Col 1: AQI -->
-            <div class="lg:col-span-8 bg-white/95 backdrop-blur-md border border-g-grey-light rounded-3xl p-8 card-shadow flex flex-col h-full">
-                <div class="flex justify-between items-start mb-8">
-                    <div>
-                        <div class="text-[10px] font-bold text-g-grey tracking-widest uppercase flex items-center gap-2 flex-wrap">
-                            Atmospheric Health 
-                            <span class="bg-[#F8F9FA] border border-g-grey-light text-g-grey-dark px-1.5 py-0.5 rounded text-[8px] tracking-normal normal-case font-medium shadow-sm flex items-center gap-1">
-                                <img src="/src/assets/icons/logo-openweathermap.png" alt="OpenWeatherMap" class="h-2.5 object-contain inline-block" onerror="this.outerHTML='<span class=\'font-bold text-g-black\'>OpenWeatherMap</span>'">
-                            </span>
-                        </div>
-                        <h2 class="text-xl font-bold text-g-black mt-1">Air Quality Index</h2>
-                    </div>
-                    <div class="bg-[#F8F9FA] border border-g-grey-light px-3 py-1 rounded-full text-[10px] font-bold text-g-grey-dark uppercase tracking-widest flex items-center gap-2">
-                        <span class="w-2 h-2 rounded-full bg-g-green-medium animate-pulse"></span> Live Feed
-                    </div>
-                </div>
-
-                <div class="flex-1 flex flex-col items-center justify-center py-6">
-                    <div class="relative w-56 h-32 flex justify-center overflow-hidden">
-                        <svg viewBox="0 0 100 50" class="w-full absolute top-0 left-0 overflow-visible">
-                            <path d="M 10 50 A 40 40 0 0 1 90 50" fill="none" stroke="var(--color-g-grey-light)" stroke-width="10" stroke-linecap="round"/>
-                            <path id="aqi-gauge-path" d="M 10 50 A 40 40 0 0 1 90 50" fill="none" stroke="var(--color-g-grey)" stroke-width="10" stroke-linecap="round" stroke-dasharray="125.6" stroke-dashoffset="125.6" class="transition-all duration-1000 ease-out"/>
-                        </svg>
-                        <div class="absolute bottom-0 flex flex-col items-center">
-                            <span class="text-[10px] font-bold text-g-grey-dark uppercase tracking-widest mb-1">Intl AQI</span>
-                            <span id="aqi-display" class="text-6xl font-black text-g-grey leading-none tracking-tighter">-</span>
-                            <span id="aqi-label" class="text-sm font-bold text-g-grey-dark mt-2 bg-white px-2 rounded-full border border-g-grey-light">Calculating</span>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="mt-auto">
-                    <h3 id="location-name" class="text-sm font-bold text-g-black mb-1">Locating via GPS...</h3>
-                    <p class="text-xs text-g-grey-dark leading-relaxed">Air quality impacts health differently depending on individual sensitivities.</p>
-                    <div id="aqi-alert" class="mt-6 bg-white border border-g-grey/20 text-g-grey-dark p-4 rounded-lg flex items-start gap-3 text-sm font-medium hidden">
-                        <!-- Filled by JS based on AQI level -->
-                    </div>
-                </div>
-            </div>
-
-            <!-- Col 2: Geo Ledger & Status -->
-            <div class="lg:col-span-4 bg-white/95 backdrop-blur-md border border-g-grey-light rounded-3xl p-8 card-shadow flex flex-col">
-                <div class="mb-8">
-                    <div class="text-[10px] font-bold text-g-grey tracking-widest uppercase flex items-center gap-2 flex-wrap">
-                        Location Ledger 
-                        <span class="bg-[#F8F9FA] border border-g-grey-light text-g-grey-dark px-1.5 py-0.5 rounded text-[8px] tracking-normal normal-case font-medium shadow-sm flex items-center gap-1">
-                            <img src="/src/assets/icons/logo-openweathermap.png" alt="OpenWeatherMap" class="h-2.5 object-contain inline-block" onerror="this.outerHTML='<span class=\'font-bold text-g-black\'>OpenWeatherMap</span>'">
-                        </span>
-                    </div>
-                    <h2 class="text-xl font-bold text-g-black mt-1">Geographic Info</h2>
-                    <p class="text-xs text-g-grey-dark mt-2">Observing local space relative to maritime and terrain currents.</p>
-                </div>
-
-                <div class="bg-[#F8F9FA] rounded-xl p-5 space-y-4 font-mono text-xs text-g-grey-dark border border-g-grey-light my-auto">
-                    <div class="flex justify-between items-center"><span class="text-g-grey">API Status</span> <span id="api-status" class="font-bold flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-g-grey animate-pulse"></span> Connecting...</span></div>
-                    <div class="flex justify-between items-center"><span class="text-g-grey">Local Time</span> <span id="local-time" class="font-bold text-g-black">-</span></div>
-                    <div class="flex justify-between items-center"><span class="text-g-grey">Latitude</span> <span id="geo-lat" class="font-bold text-g-black">-</span></div>
-                    <div class="flex justify-between items-center"><span class="text-g-grey">Longitude</span> <span id="geo-lon" class="font-bold text-g-black">-</span></div>
-                    <div class="flex justify-between items-center"><span class="text-g-grey">Network Sync</span> <span id="header-sync" class="font-bold text-g-black">-</span></div>
-                    <div class="flex justify-between items-center"><span class="text-g-grey">Weather</span> <span id="header-weather" class="font-bold text-g-black">-</span></div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Environmental Conditions Context Row -->
-        <div class="px-6 sm:px-10 pt-6 grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div class="bg-white/95 backdrop-blur-md border border-g-grey-light rounded-2xl p-6 card-shadow flex flex-col items-center justify-center text-center group hover:border-g-blue-medium transition-colors">
-                <img src="/src/assets/icons/wind-direction.png" alt="Wind" class="w-8 h-8 mb-2 grayscale opacity-80 group-hover:grayscale-0 group-hover:opacity-100 transition-all">
-                <span class="text-[10px] font-bold text-g-grey uppercase tracking-widest">Wind</span>
-                <span id="env-wind" class="text-xl font-bold text-g-black mt-1 leading-none">-</span>
-                <div class="bg-[#F8F9FA] border border-g-grey-light text-g-grey-dark px-2 py-1 rounded shadow-sm mt-3 flex items-center justify-center">
-                    <img src="/src/assets/icons/logo-openweathermap.png" alt="OpenWeatherMap" class="h-2.5 object-contain" onerror="this.outerHTML='<span class=\'text-[8px] font-bold text-g-black uppercase tracking-widest\'>OWM</span>'">
-                </div>
-            </div>
-
-            <div class="bg-white/95 backdrop-blur-md border border-g-grey-light rounded-2xl p-6 card-shadow flex flex-col items-center justify-center text-center group hover:border-g-blue-medium transition-colors">
-                <img src="/src/assets/icons/humidity.png" alt="Humidity" class="w-8 h-8 mb-2 grayscale opacity-80 group-hover:grayscale-0 group-hover:opacity-100 transition-all">
-                <span class="text-[10px] font-bold text-g-grey uppercase tracking-widest">Humidity</span>
-                <span id="env-humidity" class="text-xl font-bold text-g-black mt-1 leading-none">-</span>
-                <div class="bg-[#F8F9FA] border border-g-grey-light text-g-grey-dark px-2 py-1 rounded shadow-sm mt-3 flex items-center justify-center">
-                    <img src="/src/assets/icons/logo-openweathermap.png" alt="OpenWeatherMap" class="h-2.5 object-contain" onerror="this.outerHTML='<span class=\'text-[8px] font-bold text-g-black uppercase tracking-widest\'>OWM</span>'">
-                </div>
-            </div>
-
-            <div class="bg-white/95 backdrop-blur-md border border-g-grey-light rounded-2xl p-6 card-shadow flex flex-col items-center justify-center text-center group hover:border-g-blue-medium transition-colors">
-                <img src="/src/assets/icons/sun.png" alt="UV Index" class="w-8 h-8 mb-2 grayscale opacity-80 group-hover:grayscale-0 group-hover:opacity-100 transition-all">
-                <span class="text-[10px] font-bold text-g-grey uppercase tracking-widest">UV Index</span>
-                <span id="env-uv" class="text-xl font-bold text-g-black mt-1 leading-none">-</span>
-                <div class="bg-[#F8F9FA] border border-g-grey-light text-g-grey-dark px-2 py-1 rounded shadow-sm mt-3 flex items-center justify-center">
-                    <img src="/src/assets/icons/logo-uvindexapi.png" alt="UVIndexAPI" class="h-2.5 object-contain" onerror="this.outerHTML='<span class=\'text-[8px] font-bold text-g-black uppercase tracking-widest\'>UVIndexAPI</span>'">
-                </div>
-            </div>
-        </div>
-
-        <!-- Dashboard Grid Row 2: Pollutants -->
-        <div class="px-6 sm:px-10 py-10">
-            <div class="flex justify-between items-end mb-6">
-                <div>
-                    <div class="text-[10px] font-bold text-g-grey tracking-widest uppercase flex items-center gap-2 flex-wrap">
-                        Active Metrics 
-                        <span class="bg-[#F8F9FA] border border-g-grey-light text-g-grey-dark px-1.5 py-0.5 rounded text-[8px] tracking-normal normal-case font-medium shadow-sm flex items-center gap-1">
-                            <img src="/src/assets/icons/logo-openweathermap.png" alt="OpenWeatherMap" class="h-2.5 object-contain inline-block" onerror="this.outerHTML='<span class=\'font-bold text-g-black\'>OpenWeatherMap</span>'">
-                        </span>
-                    </div>
-                    <h2 class="text-xl font-bold text-g-black mt-1">Chemical Pollutant Breakdown</h2>
-                </div>
-                <div class="text-xs text-g-grey-dark hidden sm:block">Compared against <span class="font-bold text-g-black">WHO Guidelines</span></div>
-            </div>
-
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                <!-- Pollutant Cards -->
-                <div class="bg-white/95 backdrop-blur-md border border-g-grey-light rounded-2xl p-6 card-shadow relative overflow-hidden group hover:border-g-blue-medium transition-colors">
-                    <div class="flex justify-between items-start mb-6">
-                        <div><h3 class="text-lg font-black text-g-black leading-none">PM2.5</h3><p class="text-[10px] text-g-grey mt-1">Fine Particulates</p></div>
-                        <span id="badge-pm25" class="text-[10px] font-bold px-2 py-0.5 rounded border text-g-grey">-</span>
-                    </div>
-                    <div id="val-pm25" class="text-4xl font-black text-g-black mb-6">-</div>
-                    <div class="flex justify-between text-[10px] text-g-grey font-medium mb-2"><span>Guideline: 15µg/m³</span><span id="pct-pm25">-</span></div>
-                    <div class="h-2 bg-g-grey-light rounded-full w-full mb-4"><div id="bar-pm25" class="h-full bg-g-grey rounded-full w-0 transition-all duration-700"></div></div>
-                </div>
-
-                <div class="bg-white/95 backdrop-blur-md border border-g-grey-light rounded-2xl p-6 card-shadow relative overflow-hidden group hover:border-g-blue-medium transition-colors">
-                    <div class="flex justify-between items-start mb-6">
-                        <div><h3 class="text-lg font-black text-g-black leading-none">PM10</h3><p class="text-[10px] text-g-grey mt-1">Coarse Dust</p></div>
-                        <span id="badge-pm10" class="text-[10px] font-bold px-2 py-0.5 rounded border text-g-grey">-</span>
-                    </div>
-                    <div id="val-pm10" class="text-4xl font-black text-g-black mb-6">-</div>
-                    <div class="flex justify-between text-[10px] text-g-grey font-medium mb-2"><span>Guideline: 45µg/m³</span><span id="pct-pm10">-</span></div>
-                    <div class="h-2 bg-g-grey-light rounded-full w-full mb-4"><div id="bar-pm10" class="h-full bg-g-grey rounded-full w-0 transition-all duration-700"></div></div>
-                </div>
-
-                <div class="bg-white/95 backdrop-blur-md border border-g-grey-light rounded-2xl p-6 card-shadow relative overflow-hidden group hover:border-g-blue-medium transition-colors">
-                    <div class="flex justify-between items-start mb-6">
-                        <div><h3 class="text-lg font-black text-g-black leading-none">CO</h3><p class="text-[10px] text-g-grey mt-1">Carbon Monoxide</p></div>
-                        <span id="badge-co" class="text-[10px] font-bold px-2 py-0.5 rounded border text-g-grey">-</span>
-                    </div>
-                    <div id="val-co" class="text-4xl font-black text-g-black mb-6">-</div>
-                    <div class="flex justify-between text-[10px] text-g-grey font-medium mb-2"><span>Guideline: 4000µg/m³</span><span id="pct-co">-</span></div>
-                    <div class="h-2 bg-g-grey-light rounded-full w-full mb-4"><div id="bar-co" class="h-full bg-g-grey rounded-full w-0 transition-all duration-700"></div></div>
-                </div>
+            <!-- LEFT COLUMN: Merged Geo Ledger & Env Tiles & Weather (col-span-3) -->
+            <div class="lg:col-span-3 flex flex-col gap-3 min-h-0">
                 
-                <div class="bg-white/95 backdrop-blur-md border border-g-grey-light rounded-2xl p-6 card-shadow relative overflow-hidden group hover:border-g-blue-medium transition-colors">
-                    <div class="flex justify-between items-start mb-6">
-                        <div><h3 class="text-lg font-black text-g-black leading-none">NO2</h3><p class="text-[10px] text-g-grey mt-1">Nitrogen Dioxide</p></div>
-                        <span id="badge-no2" class="text-[10px] font-bold px-2 py-0.5 rounded border text-g-grey">-</span>
-                    </div>
-                    <div id="val-no2" class="text-4xl font-black text-g-black mb-6">-</div>
-                    <div class="flex justify-between text-[10px] text-g-grey font-medium mb-2"><span>Guideline: 25µg/m³</span><span id="pct-no2">-</span></div>
-                    <div class="h-2 bg-g-grey-light rounded-full w-full mb-4"><div id="bar-no2" class="h-full bg-g-grey rounded-full w-0 transition-all duration-700"></div></div>
-                </div>
-
-                <div class="bg-white/95 backdrop-blur-md border border-g-grey-light rounded-2xl p-6 card-shadow relative overflow-hidden group hover:border-g-blue-medium transition-colors">
-                    <div class="flex justify-between items-start mb-6">
-                        <div><h3 class="text-lg font-black text-g-black leading-none">O3</h3><p class="text-[10px] text-g-grey mt-1">Ozone</p></div>
-                        <span id="badge-o3" class="text-[10px] font-bold px-2 py-0.5 rounded border text-g-grey">-</span>
-                    </div>
-                    <div id="val-o3" class="text-4xl font-black text-g-black mb-6">-</div>
-                    <div class="flex justify-between text-[10px] text-g-grey font-medium mb-2"><span>Guideline: 100µg/m³</span><span id="pct-o3">-</span></div>
-                    <div class="h-2 bg-g-grey-light rounded-full w-full mb-4"><div id="bar-o3" class="h-full bg-g-grey rounded-full w-0 transition-all duration-700"></div></div>
-                </div>
-
-                <div class="bg-white/95 backdrop-blur-md border border-g-grey-light rounded-2xl p-6 card-shadow relative overflow-hidden group hover:border-g-blue-medium transition-colors">
-                    <div class="flex justify-between items-start mb-6">
-                        <div><h3 class="text-lg font-black text-g-black leading-none">SO2</h3><p class="text-[10px] text-g-grey mt-1">Sulphur Dioxide</p></div>
-                        <span id="badge-so2" class="text-[10px] font-bold px-2 py-0.5 rounded border text-g-grey">-</span>
-                    </div>
-                    <div id="val-so2" class="text-4xl font-black text-g-black mb-6">-</div>
-                    <div class="flex justify-between text-[10px] text-g-grey font-medium mb-2"><span>Guideline: 40µg/m³</span><span id="pct-so2">-</span></div>
-                    <div class="h-2 bg-g-grey-light rounded-full w-full mb-4"><div id="bar-so2" class="h-full bg-g-grey rounded-full w-0 transition-all duration-700"></div></div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Dashboard Grid Row 3: Retained Tools (Forecast & Sparkline) -->
-        <div class="px-6 sm:px-10 pb-10 grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div class="bg-white/95 backdrop-blur-md border border-g-grey-light rounded-2xl p-6 card-shadow">
-                <div class="flex justify-between items-center mb-4">
-                    <span class="text-[10px] font-bold text-g-grey uppercase tracking-widest flex items-center gap-2">
-                        Prediksi PM2.5 (24 Jam)
-                        <span class="bg-[#F8F9FA] border border-g-grey-light text-g-grey-dark px-1.5 py-0.5 rounded text-[8px] tracking-normal normal-case font-medium shadow-sm hidden sm:flex items-center gap-1">
-                            <img src="/src/assets/icons/logo-openweathermap.png" alt="OpenWeatherMap" class="h-2.5 object-contain inline-block" onerror="this.outerHTML='<span class=\'font-bold text-g-black\'>OWM</span>'">
-                        </span>
-                    </span>
-                    <span class="text-[10px] text-g-blue-medium flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-g-blue-medium animate-pulse"></span> Forecast</span>
-                </div>
-                <canvas id="pm25-sparkline" width="600" height="60" class="w-full h-[60px]"></canvas>
-            </div>
-            
-            <div class="bg-white/95 backdrop-blur-md border border-g-grey-light rounded-2xl p-6 card-shadow">
-                <div class="flex justify-between items-center mb-4">
-                    <span class="text-[10px] font-bold text-g-grey uppercase tracking-widest flex items-center gap-2">
-                        Prakiraan Cuaca (24 Jam)
-                        <span class="bg-[#F8F9FA] border border-g-grey-light text-g-grey-dark px-1.5 py-0.5 rounded text-[8px] tracking-normal normal-case font-medium shadow-sm hidden sm:flex items-center gap-1">
-                            <img src="/src/assets/icons/logo-openweathermap.png" alt="OpenWeatherMap" class="h-2.5 object-contain inline-block" onerror="this.outerHTML='<span class=\'font-bold text-g-black\'>OWM</span>'">
-                        </span>
-                    </span>
-                    <span class="text-[10px] text-g-grey-dark">Suhu & Kondisi</span>
-                </div>
-                <div id="weather-forecast-container" class="flex overflow-x-auto gap-3 pb-2 scrollbar-hide min-h-[70px]"></div>
-            </div>
-        </div>
-
-        <!-- Dashboard Grid Row 4: AI Clinician Advisory -->
-        <div class="px-6 sm:px-10 pb-12">
-            <div class="bg-g-black rounded-[2rem] p-8 shadow-2xl relative overflow-hidden">
-                <!-- AI Loading State -->
-                <div id="ai-loading" class="flex flex-col items-center justify-center py-20 relative z-10 hidden">
-                    <svg class="animate-spin h-8 w-8 text-g-blue-medium mb-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
-                    <span class="text-g-blue-light text-sm font-medium tracking-wide">Synthesizing clinical data...</span>
-                </div>
-
-                <!-- AI Content State -->
-                <div id="ai-content-block" class="relative z-10">
-                    <div class="flex items-center gap-3 mb-8">
-                        <div class="w-10 h-10 rounded-lg bg-g-blue-medium/20 flex items-center justify-center shrink-0">
-                            <img src="https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/google-gemini.svg" alt="Gemini AI" class="w-6 h-6 object-contain" />
+                <!-- Merged Geo Ledger Card -->
+                <div class="flex-1 bg-white/95 backdrop-blur-md border border-g-grey-light rounded-2xl p-3 card-shadow flex flex-col gap-2 min-h-0 overflow-y-auto custom-scrollbar">
+                    
+                    <!-- Location Intelligence Section -->
+                    <div class="shrink-0">
+                        <div class="text-[9px] font-bold text-g-grey tracking-widest uppercase flex items-center gap-1 mb-1.5">
+                            Location Intelligence
                         </div>
-                        <div>
-                            <div class="text-[10px] font-bold text-g-blue-medium tracking-widest uppercase flex items-center gap-2 flex-wrap">
-                                AI Cognitive Guard
-                                <span class="bg-g-blue-medium/20 border border-g-blue-medium/30 text-g-blue-light px-1.5 py-0.5 rounded text-[8px] tracking-normal normal-case font-medium shadow-sm">Model: <span class="font-bold text-white">Google Gemini 3.5 Flash</span></span>
+
+                        <!-- Current Location moved above Local Time -->
+                        <div class="flex flex-col gap-0.5 mb-1.5">
+                            <span class="text-[9px] text-g-grey font-bold uppercase tracking-wider">Current Location</span>
+                            <h3 id="location-name" class="text-sm font-bold text-g-black leading-tight truncate pr-2">Locating...</h3>
+                        </div>
+
+                        <div class="flex flex-col gap-0.5 mb-1.5 w-full">
+                            <span class="text-[9px] text-g-grey font-bold uppercase tracking-wider">Local Time</span>
+                            <div id="local-time" class="text-xl font-black text-g-black tracking-tight leading-none flex justify-between items-center w-full">-</div>
+                        </div>
+                        <div class="flex flex-col gap-0.5">
+                            <span class="text-[9px] text-g-grey font-bold uppercase tracking-wider">Current Weather</span>
+                            <span id="header-weather" class="text-sm font-bold text-g-black leading-tight flex flex-wrap items-center gap-1.5">-</span>
+                        </div>
+                    </div>
+
+                    <!-- Environment Tiles Merged Here (Expanded & Flexible to fill space) -->
+                    <div class="flex-1 flex flex-col gap-2 mt-1 min-h-[160px]">
+                        <div class="flex-[2] grid grid-cols-3 gap-2">
+                            <div class="bg-[#F8F9FA] border border-g-grey-light rounded-xl p-2 flex flex-col items-center justify-center text-center transition-colors hover:bg-white h-full w-full">
+                                <img src="/src/assets/icons/wind.png" alt="Wind" class="w-5 h-5 mb-1.5 opacity-90 drop-shadow-[0_2px_3px_rgba(0,0,0,0.4)]" onerror="this.style.display='none'">
+                                <span class="text-[8px] font-bold text-g-grey uppercase tracking-widest mb-0.5">Wind</span>
+                                <span id="env-wind" class="text-xs font-bold text-g-black leading-none cursor-help border-b border-dashed border-g-grey/60 pb-px" data-js-tooltip="Loading...">-</span>
                             </div>
-                            <h2 class="text-2xl font-black text-white leading-none mt-1">AI Clinician Advisory</h2>
+                            <div class="bg-[#F8F9FA] border border-g-grey-light rounded-xl p-2 flex flex-col items-center justify-center text-center transition-colors hover:bg-white h-full w-full">
+                                <img src="/src/assets/icons/humidity.png" alt="Humidity" class="w-5 h-5 mb-1.5 opacity-90 drop-shadow-[0_2px_3px_rgba(0,0,0,0.4)]" onerror="this.style.display='none'">
+                                <span class="text-[8px] font-bold text-g-grey uppercase tracking-widest mb-0.5">Humidity</span>
+                                <span id="env-humidity" class="text-xs font-bold text-g-black leading-none cursor-help border-b border-dashed border-g-grey/60 pb-px" data-js-tooltip="Loading...">-</span>
+                            </div>
+                            <div class="bg-[#F8F9FA] border border-g-grey-light rounded-xl p-2 flex flex-col items-center justify-center text-center transition-colors hover:bg-white h-full w-full">
+                                <img src="/src/assets/icons/uv-index.png" alt="UV Index" class="w-5 h-5 mb-1.5 opacity-90 drop-shadow-[0_2px_3px_rgba(0,0,0,0.4)]" onerror="this.style.display='none'">
+                                <span class="text-[8px] font-bold text-g-grey uppercase tracking-widest mb-0.5">UV Index</span>
+                                <span id="env-uv" class="text-xs font-bold text-g-black leading-none cursor-help border-b border-dashed border-g-grey/60 pb-px" data-js-tooltip="Loading...">-</span>
+                            </div>
+                            
+                            <!-- Extended Environment Tiles -->
+                            <div class="bg-[#F8F9FA] border border-g-grey-light rounded-xl p-2 flex flex-col items-center justify-center text-center transition-colors hover:bg-white h-full w-full">
+                                <img src="/src/assets/icons/thermometer.png" alt="Feels Like" class="w-5 h-5 mb-1.5 opacity-90 drop-shadow-[0_2px_3px_rgba(0,0,0,0.4)]" onerror="this.style.display='none'">
+                                <span class="text-[8px] font-bold text-g-grey uppercase tracking-widest mb-0.5">Feels Like</span>
+                                <span id="env-feels-like" class="text-xs font-bold text-g-black leading-none cursor-help border-b border-dashed border-g-grey/60 pb-px" data-js-tooltip="Loading...">-</span>
+                            </div>
+                            <div class="bg-[#F8F9FA] border border-g-grey-light rounded-xl p-2 flex flex-col items-center justify-center text-center transition-colors hover:bg-white h-full w-full">
+                                <img src="/src/assets/icons/atmospheric.png" alt="Pressure" class="w-5 h-5 mb-1.5 opacity-90 drop-shadow-[0_2px_3px_rgba(0,0,0,0.4)]" onerror="this.style.display='none'">
+                                <span class="text-[8px] font-bold text-g-grey uppercase tracking-widest mb-0.5">Pressure</span>
+                                <span id="env-pressure" class="text-xs font-bold text-g-black leading-none cursor-help border-b border-dashed border-g-grey/60 pb-px" data-js-tooltip="Loading...">-</span>
+                            </div>
+                            <div class="bg-[#F8F9FA] border border-g-grey-light rounded-xl p-2 flex flex-col items-center justify-center text-center transition-colors hover:bg-white h-full w-full">
+                                <img src="/src/assets/icons/visibility.png" alt="Visibility" class="w-5 h-5 mb-1.5 opacity-90 drop-shadow-[0_2px_3px_rgba(0,0,0,0.4)]" onerror="this.style.display='none'">
+                                <span class="text-[8px] font-bold text-g-grey uppercase tracking-widest mb-0.5">Visibility</span>
+                                <span id="env-visibility" class="text-xs font-bold text-g-black leading-none cursor-help border-b border-dashed border-g-grey/60 pb-px" data-js-tooltip="Loading...">-</span>
+                            </div>
+                        </div>
+                        
+                        <!-- Sunrise & Sunset Tiles in a 2-Column Grid for balance -->
+                        <div class="flex-1 grid grid-cols-2 gap-2">
+                            <div class="bg-[#F8F9FA] border border-g-grey-light rounded-xl p-2 flex flex-col items-center justify-center text-center transition-colors hover:bg-white h-full w-full">
+                                <img src="/src/assets/icons/sunrise.png" alt="Sunrise" class="w-5 h-5 mb-1.5 opacity-90 drop-shadow-[0_2px_3px_rgba(0,0,0,0.4)]" onerror="this.style.display='none'">
+                                <span class="text-[8px] font-bold text-g-grey uppercase tracking-widest mb-0.5">Sunrise</span>
+                                <span id="env-sunrise" class="text-xs font-bold text-g-black leading-none cursor-help border-b border-dashed border-g-grey/60 pb-px" data-js-tooltip="Loading...">-</span>
+                            </div>
+                            <div class="bg-[#F8F9FA] border border-g-grey-light rounded-xl p-2 flex flex-col items-center justify-center text-center transition-colors hover:bg-white h-full w-full">
+                                <img src="/src/assets/icons/sunset.png" alt="Sunset" class="w-5 h-5 mb-1.5 opacity-90 drop-shadow-[0_2px_3px_rgba(0,0,0,0.4)]" onerror="this.style.display='none'">
+                                <span class="text-[8px] font-bold text-g-grey uppercase tracking-widest mb-0.5">Sunset</span>
+                                <span id="env-sunset" class="text-xs font-bold text-g-black leading-none cursor-help border-b border-dashed border-g-grey/60 pb-px" data-js-tooltip="Loading...">-</span>
+                            </div>
                         </div>
                     </div>
 
-                    <div class="grid grid-cols-1 gap-6">
-                        <div class="space-y-6">
-                            
-                            <div>
-                                <span class="text-[10px] font-bold text-g-grey uppercase tracking-widest block mb-3">Personalize Advisory For:</span>
-                                <div class="flex flex-wrap gap-2" id="profile-selector">
-                                    <button class="profile-btn active bg-g-blue-medium text-white border-g-blue-medium px-4 py-1.5 rounded-full border text-xs font-semibold transition-colors shadow-sm" data-profile="General">General</button>
-                                    <button class="profile-btn bg-white/5 text-g-grey-light border-white/10 hover:bg-white/10 px-4 py-1.5 rounded-full border text-xs font-semibold transition-colors" data-profile="Children">Children</button>
-                                    <button class="profile-btn bg-white/5 text-g-grey-light border-white/10 hover:bg-white/10 px-4 py-1.5 rounded-full border text-xs font-semibold transition-colors" data-profile="Seniors">Seniors</button>
-                                    <button class="profile-btn bg-white/5 text-g-grey-light border-white/10 hover:bg-white/10 px-4 py-1.5 rounded-full border text-xs font-semibold transition-colors" data-profile="Asthma">Asthma</button>
-                                    <button class="profile-btn bg-white/5 text-g-grey-light border-white/10 hover:bg-white/10 px-4 py-1.5 rounded-full border text-xs font-semibold transition-colors" data-profile="Athletes/Joggers">Athletes/Joggers</button>
-                                    <button class="profile-btn bg-white/5 text-g-grey-light border-white/10 hover:bg-white/10 px-4 py-1.5 rounded-full border text-xs font-semibold transition-colors" data-profile="Motorcyclists">Motorcyclists</button>
-                                    <button class="profile-btn bg-white/5 text-g-grey-light border-white/10 hover:bg-white/10 px-4 py-1.5 rounded-full border text-xs font-semibold transition-colors" data-profile="Pregnant Women">Pregnant Women</button>
+                    <hr class="border-g-grey-light my-1 shrink-0">
+
+                    <!-- Moved Weather Forecast Container -->
+                    <div class="flex flex-col gap-1.5 shrink-0 mb-1">
+                        <div class="flex justify-between items-center px-1">
+                            <span class="text-[8px] font-bold text-g-grey uppercase tracking-widest">24H Weather Forecast</span>
+                        </div>
+                        <div id="weather-forecast-container" class="flex overflow-x-auto custom-scrollbar pb-1 gap-1.5 items-center w-full"></div>
+                    </div>
+
+                    <hr class="border-g-grey-light my-1 shrink-0">
+
+                    <!-- Condensed GPS / System Data Section -->
+                    <div class="grid grid-cols-2 gap-1.5 font-mono text-[8.5px] shrink-0 mt-0.5">
+                        <div class="bg-[#F8F9FA] p-1.5 rounded border border-g-grey-light flex flex-col gap-0.5">
+                            <span class="text-g-grey">GPS Coords</span>
+                            <div class="font-bold text-g-black truncate">
+                                <div>Lat: <span id="geo-lat">-</span></div>
+                                <div class="mt-0.5">Lon: <span id="geo-lon">-</span></div>
+                            </div>
+                        </div>
+                        <div class="bg-[#F8F9FA] p-1.5 rounded border border-g-grey-light flex flex-col gap-0.5">
+                            <span class="text-g-grey">System Link</span>
+                            <div class="font-bold text-g-black truncate">
+                                <div class="flex items-center gap-1">API: <span id="api-status" class="flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full bg-g-grey animate-pulse"></span> Con...</span></div>
+                                <div class="mt-0.5">Sync: <span id="header-sync">-</span></div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- MIDDLE COLUMN: Expanded Pollutants & Charts (col-span-5) -->
+            <div class="lg:col-span-5 flex flex-col gap-3 min-h-0">
+                
+                <!-- Expanded Pollutants Card (Now includes AQI) -->
+                <div class="flex-1 bg-white/95 backdrop-blur-md border border-g-grey-light rounded-2xl p-4 card-shadow flex flex-col min-h-0 overflow-y-auto custom-scrollbar">
+                    
+                    <!-- AQI & Advice Merged Section -->
+                    <div class="flex flex-col sm:flex-row gap-4 mb-4 shrink-0">
+                        <div class="flex flex-col items-center justify-center bg-[#F8F9FA] rounded-xl p-4 border border-g-grey-light shrink-0 w-40 shadow-sm">
+                            <div class="text-[9px] font-bold text-g-grey tracking-widest uppercase flex items-center gap-1 w-full mb-2">
+                                <span class="w-1.5 h-1.5 rounded-full bg-g-green-medium animate-pulse"></span> Live AQI
+                            </div>
+                            <div class="relative w-28 h-16 flex justify-center">
+                                <svg viewBox="0 0 100 50" class="w-full absolute top-0 left-0 overflow-visible">
+                                    <path d="M 10 50 A 40 40 0 0 1 90 50" fill="none" stroke="var(--color-g-grey-light)" stroke-width="12" stroke-linecap="round"/>
+                                    <path id="aqi-gauge-path" d="M 10 50 A 40 40 0 0 1 90 50" fill="none" stroke="var(--color-g-grey)" stroke-width="12" stroke-linecap="round" stroke-dasharray="125.6" stroke-dashoffset="125.6" class="transition-all duration-1000 ease-out"/>
+                                </svg>
+                                <div class="absolute bottom-0 flex flex-col items-center translate-y-1.5">
+                                    <span id="aqi-display" class="text-5xl font-black text-g-grey leading-none tracking-tighter">-</span>
                                 </div>
                             </div>
+                            <span id="aqi-label" class="text-xs font-bold text-g-grey-dark mt-3 bg-white px-4 py-1 rounded-full border border-g-grey-light shadow-sm">Calculating</span>
+                        </div>
+                        
+                        <div class="flex-1 flex flex-col justify-center gap-2">
+                            <div id="aqi-details-container" class="w-full flex flex-col gap-1.5 opacity-0 transition-opacity duration-500">
+                                <p id="aqi-description" class="text-[10px] text-g-grey-dark leading-snug font-medium px-1">
+                                    <!-- Filled by JS -->
+                                </p>
+                                <div class="bg-[#F8F9FA] border border-g-grey-light rounded-lg p-2 flex items-start gap-1.5 shadow-sm">
+                                    <span class="text-[11px] mt-0.5">💡</span>
+                                    <p id="aqi-advice-text" class="text-[9px] text-g-black font-medium leading-snug">
+                                        <!-- Filled by JS -->
+                                    </p>
+                                </div>
+                            </div>
+                            <div id="aqi-alert" class="w-full bg-g-grey-light/20 border border-g-grey/20 text-g-grey-dark px-2 py-1.5 rounded-lg text-[9px] font-medium hidden">
+                                <!-- Filled by JS based on AQI level -->
+                            </div>
+                        </div>
+                    </div>
 
-                            <div class="bg-white/5 border border-white/10 rounded-2xl p-6">
-                                <h3 class="text-[10px] font-bold text-g-blue-medium tracking-widest uppercase mb-3">Atmospheric Safety Digest</h3>
-                                <p id="ai-digest" class="text-g-grey-light leading-relaxed font-medium">Monitoring conditions locally. Waiting for environmental sensor sync...</p>
+                    <hr class="border-g-grey-light mb-3 shrink-0">
+
+                    <div class="flex justify-between items-end mb-3 shrink-0">
+                        <div>
+                            <div class="text-[9px] font-bold text-g-grey tracking-widest uppercase">Active Metrics</div>
+                            <h2 class="text-sm font-bold text-g-black mt-0.5">Chemical Breakdown</h2>
+                        </div>
+                        <div class="text-[9px] text-g-grey-dark hidden sm:block">Ref: <span class="font-bold text-g-black">WHO Guidelines</span></div>
+                    </div>
+
+                    <!-- Increased gap and padding for expanded look -->
+                    <div class="flex-1 overflow-y-auto custom-scrollbar grid grid-cols-2 sm:grid-cols-3 gap-2.5 pr-1 pb-1">
+                        
+                        <div class="bg-white border border-g-grey-light rounded-xl p-3 flex flex-col justify-between shadow-sm">
+                            <div class="flex justify-between items-start mb-1">
+                                <div><h3 class="text-xs font-black text-g-black leading-none">PM2.5</h3><p class="text-[8px] text-g-grey mt-0.5">Fine Dust</p></div>
+                                <span id="badge-pm25" class="text-[8px] font-bold px-1.5 py-0.5 rounded border text-g-grey">-</span>
+                            </div>
+                            <div id="val-pm25" class="text-2xl font-black text-g-black my-1.5">-</div>
+                            <div class="flex justify-between text-[8px] text-g-grey font-medium mb-1.5"><span>Lim: 15µg</span><span id="pct-pm25">-</span></div>
+                            <div class="h-1.5 bg-g-grey-light rounded-full w-full"><div id="bar-pm25" class="h-full bg-g-grey rounded-full w-0 transition-all duration-700"></div></div>
+                        </div>
+
+                        <div class="bg-white border border-g-grey-light rounded-xl p-3 flex flex-col justify-between shadow-sm">
+                            <div class="flex justify-between items-start mb-1">
+                                <div><h3 class="text-xs font-black text-g-black leading-none">PM10</h3><p class="text-[8px] text-g-grey mt-0.5">Coarse Dust</p></div>
+                                <span id="badge-pm10" class="text-[8px] font-bold px-1.5 py-0.5 rounded border text-g-grey">-</span>
+                            </div>
+                            <div id="val-pm10" class="text-2xl font-black text-g-black my-1.5">-</div>
+                            <div class="flex justify-between text-[8px] text-g-grey font-medium mb-1.5"><span>Lim: 45µg</span><span id="pct-pm10">-</span></div>
+                            <div class="h-1.5 bg-g-grey-light rounded-full w-full"><div id="bar-pm10" class="h-full bg-g-grey rounded-full w-0 transition-all duration-700"></div></div>
+                        </div>
+
+                        <div class="bg-white border border-g-grey-light rounded-xl p-3 flex flex-col justify-between shadow-sm">
+                            <div class="flex justify-between items-start mb-1">
+                                <div><h3 class="text-xs font-black text-g-black leading-none">CO</h3><p class="text-[8px] text-g-grey mt-0.5">Carbon Monoxide</p></div>
+                                <span id="badge-co" class="text-[8px] font-bold px-1.5 py-0.5 rounded border text-g-grey">-</span>
+                            </div>
+                            <div id="val-co" class="text-2xl font-black text-g-black my-1.5">-</div>
+                            <div class="flex justify-between text-[8px] text-g-grey font-medium mb-1.5"><span>Lim: 4000µg</span><span id="pct-co">-</span></div>
+                            <div class="h-1.5 bg-g-grey-light rounded-full w-full"><div id="bar-co" class="h-full bg-g-grey rounded-full w-0 transition-all duration-700"></div></div>
+                        </div>
+                        
+                        <div class="bg-white border border-g-grey-light rounded-xl p-3 flex flex-col justify-between shadow-sm">
+                            <div class="flex justify-between items-start mb-1">
+                                <div><h3 class="text-xs font-black text-g-black leading-none">NO2</h3><p class="text-[8px] text-g-grey mt-0.5">Nitrogen Dioxide</p></div>
+                                <span id="badge-no2" class="text-[8px] font-bold px-1.5 py-0.5 rounded border text-g-grey">-</span>
+                            </div>
+                            <div id="val-no2" class="text-2xl font-black text-g-black my-1.5">-</div>
+                            <div class="flex justify-between text-[8px] text-g-grey font-medium mb-1.5"><span>Lim: 25µg</span><span id="pct-no2">-</span></div>
+                            <div class="h-1.5 bg-g-grey-light rounded-full w-full"><div id="bar-no2" class="h-full bg-g-grey rounded-full w-0 transition-all duration-700"></div></div>
+                        </div>
+
+                        <div class="bg-white border border-g-grey-light rounded-xl p-3 flex flex-col justify-between shadow-sm">
+                            <div class="flex justify-between items-start mb-1">
+                                <div><h3 class="text-xs font-black text-g-black leading-none">O3</h3><p class="text-[8px] text-g-grey mt-0.5">Ozone</p></div>
+                                <span id="badge-o3" class="text-[8px] font-bold px-1.5 py-0.5 rounded border text-g-grey">-</span>
+                            </div>
+                            <div id="val-o3" class="text-2xl font-black text-g-black my-1.5">-</div>
+                            <div class="flex justify-between text-[8px] text-g-grey font-medium mb-1.5"><span>Lim: 100µg</span><span id="pct-o3">-</span></div>
+                            <div class="h-1.5 bg-g-grey-light rounded-full w-full"><div id="bar-o3" class="h-full bg-g-grey rounded-full w-0 transition-all duration-700"></div></div>
+                        </div>
+
+                        <div class="bg-white border border-g-grey-light rounded-xl p-3 flex flex-col justify-between shadow-sm">
+                            <div class="flex justify-between items-start mb-1">
+                                <div><h3 class="text-xs font-black text-g-black leading-none">SO2</h3><p class="text-[8px] text-g-grey mt-0.5">Sulphur Dioxide</p></div>
+                                <span id="badge-so2" class="text-[8px] font-bold px-1.5 py-0.5 rounded border text-g-grey">-</span>
+                            </div>
+                            <div id="val-so2" class="text-2xl font-black text-g-black my-1.5">-</div>
+                            <div class="flex justify-between text-[8px] text-g-grey font-medium mb-1.5"><span>Lim: 40µg</span><span id="pct-so2">-</span></div>
+                            <div class="h-1.5 bg-g-grey-light rounded-full w-full"><div id="bar-so2" class="h-full bg-g-grey rounded-full w-0 transition-all duration-700"></div></div>
+                        </div>
+                        
+                    </div>
+                </div>
+
+                <!-- Increased Size PM 2.5 Chart Container -->
+                <div class="shrink-0 h-40">
+                    <div class="bg-white/95 backdrop-blur-md border border-g-grey-light rounded-2xl p-3 card-shadow flex flex-col h-full w-full">
+                        <div class="flex justify-between items-center mb-1 shrink-0">
+                            <span class="text-[8px] font-bold text-g-grey uppercase tracking-widest">PM2.5 Forecast</span>
+                            <span class="text-[7px] text-g-blue-medium flex items-center gap-1"><span class="w-1 h-1 rounded-full bg-g-blue-medium animate-pulse"></span> 24H</span>
+                        </div>
+                        <div class="flex-1 relative w-full h-full">
+                            <canvas id="pm25-sparkline" class="absolute inset-0 w-full h-full"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- RIGHT COLUMN: Map Widget & AI (col-span-4) -->
+            <div class="lg:col-span-4 flex flex-col gap-3 min-h-0">
+                
+                <!-- Map Widget -->
+                <div class="shrink-0 bg-white/95 backdrop-blur-md border border-g-grey-light rounded-2xl p-2 card-shadow relative h-64 flex flex-col">
+                    <!-- Integrated Search & GPS -->
+                    <div class="absolute top-4 left-4 right-4 z-[400] flex gap-1.5">
+                        <div class="relative flex-1 shadow-sm rounded-full bg-white/95 backdrop-blur-md border border-g-grey-light overflow-hidden">
+                            <svg class="w-3 h-3 absolute left-2.5 top-1/2 -translate-y-1/2 text-g-grey" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                            <input type="text" id="location-input" placeholder="Search city..." class="w-full bg-transparent pl-7 pr-2 py-1.5 text-[10px] text-g-black focus:outline-none placeholder-g-grey">
+                        </div>
+                        <button id="btn-sync-gps" class="bg-g-black hover:bg-[#3c4043] text-white px-3 py-1.5 rounded-full text-[10px] font-bold transition-colors flex items-center gap-1 shrink-0 shadow-sm">
+                            <img src="/src/assets/icons/map.png" alt="Map" class="w-3 h-3 object-contain" onerror="this.style.display='none'">
+                            Sync Loc.
+                        </button>
+                    </div>
+                    
+                    <!-- Inline Map Container -->
+                    <div id="map-view" class="w-full h-full rounded-xl bg-[#e5e7eb] z-[1]"></div>
+                    
+                    <!-- Hovering Selection Button -->
+                    <button id="btn-confirm-map" disabled class="absolute bottom-3 left-1/2 -translate-x-1/2 z-[400] px-4 py-1.5 text-[10px] font-bold text-white bg-g-blue-medium hover:bg-g-blue rounded-full shadow-lg disabled:opacity-0 disabled:pointer-events-none transition-opacity">Select Location</button>
+                </div>
+
+                <!-- AI Clinician Advisory -->
+                <div class="flex-1 bg-g-black rounded-2xl p-4 shadow-2xl flex flex-col min-h-0 relative overflow-hidden">
+                    <!-- AI Loading State -->
+                    <div id="ai-loading" class="absolute inset-0 z-20 bg-g-black flex flex-col items-center justify-center hidden">
+                        <svg class="animate-spin h-6 w-6 text-g-blue-medium mb-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                        <span class="text-g-blue-light text-[9px] font-medium tracking-wide">Synthesizing...</span>
+                    </div>
+
+                    <div id="ai-content-block" class="flex-1 flex flex-col min-h-0 gap-3">
+                        <div class="flex items-center gap-2 shrink-0">
+                            <div class="w-6 h-6 rounded-lg bg-g-blue-medium/20 flex items-center justify-center shrink-0">
+                                <img src="https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/google-gemini.svg" alt="Gemini AI" class="w-4 h-4 object-contain" onerror="this.style.display='none'" />
+                            </div>
+                            <div>
+                                <div class="text-[7px] font-bold text-g-blue-medium tracking-widest uppercase">AI Cognitive Guard</div>
+                                <h2 class="text-xs font-black text-white leading-none mt-0.5">Clinician Advisory</h2>
+                            </div>
+                        </div>
+
+                        <div class="shrink-0">
+                            <div class="flex flex-wrap gap-1" id="profile-selector">
+                                <button class="profile-btn active bg-g-blue-medium text-white border-g-blue-medium px-2 py-0.5 rounded-full border text-[8px] font-semibold transition-colors shadow-sm" data-profile="General">General</button>
+                                <button class="profile-btn bg-white/5 text-g-grey-light border-white/10 hover:bg-white/10 px-2 py-0.5 rounded-full border text-[8px] font-semibold transition-colors" data-profile="Children">Children</button>
+                                <button class="profile-btn bg-white/5 text-g-grey-light border-white/10 hover:bg-white/10 px-2 py-0.5 rounded-full border text-[8px] font-semibold transition-colors" data-profile="Asthma">Asthma</button>
+                                <button class="profile-btn bg-white/5 text-g-grey-light border-white/10 hover:bg-white/10 px-2 py-0.5 rounded-full border text-[8px] font-semibold transition-colors" data-profile="Seniors">Seniors</button>
+                                <button class="profile-btn bg-white/5 text-g-grey-light border-white/10 hover:bg-white/10 px-2 py-0.5 rounded-full border text-[8px] font-semibold transition-colors" data-profile="Athletes/Joggers">Athletes/Joggers</button>
+                                <button class="profile-btn bg-white/5 text-g-grey-light border-white/10 hover:bg-white/10 px-2 py-0.5 rounded-full border text-[8px] font-semibold transition-colors" data-profile="Motorcyclist">Motorcyclist</button>
+                                <button class="profile-btn bg-white/5 text-g-grey-light border-white/10 hover:bg-white/10 px-2 py-0.5 rounded-full border text-[8px] font-semibold transition-colors" data-profile="Pregnant Women">Pregnant Women</button>
+                            </div>
+                        </div>
+
+                        <div class="flex-1 overflow-y-auto custom-scrollbar space-y-2 pr-1">
+                            <div class="bg-white/5 border border-white/10 rounded-xl p-3">
+                                <h3 class="text-[8px] font-bold text-g-blue-medium tracking-widest uppercase mb-1.5">Safety Digest</h3>
+                                <p id="ai-digest" class="text-g-grey-light text-[10px] leading-relaxed font-medium">Waiting for environmental sensor sync...</p>
                             </div>
                             
-                            <div id="personalized-block" class="bg-g-blue-medium/10 border border-g-blue-medium/20 rounded-2xl p-6 hidden transition-all duration-300">
-                                <h3 class="text-sm font-bold text-white mb-3 flex items-center gap-2">
-                                    <span class="text-g-blue-light text-lg leading-none">🎯</span> <span id="personalized-title">Personalized Advice</span>
+                            <div id="personalized-block" class="bg-g-blue-medium/10 border border-g-blue-medium/20 rounded-xl p-3 hidden">
+                                <h3 class="text-[10px] font-bold text-white mb-1.5 flex items-center gap-1">
+                                    <span class="text-g-blue-light text-xs leading-none">🎯</span> <span id="personalized-title">Advice</span>
                                 </h3>
-                                <p id="ai-personalized" class="text-xs text-g-grey-light leading-relaxed"></p>
+                                <p id="ai-personalized" class="text-[9px] text-g-grey-light leading-relaxed"></p>
                             </div>
                         </div>
                     </div>
                 </div>
+
             </div>
         </div>
 
         <!-- Data Sources Footer -->
-        <div class="px-6 sm:px-10 pb-6">
-            <div class="bg-white/60 backdrop-blur-sm border border-g-grey-light rounded-2xl p-6 flex flex-col md:flex-row justify-between items-center gap-4 text-xs text-g-grey-dark">
+        <div class="px-2 sm:px-4 pb-2 mt-1 shrink-0 w-full">
+            <div class="bg-white/60 backdrop-blur-sm border border-g-grey-light rounded-2xl p-4 flex flex-col md:flex-row justify-between items-center gap-4 text-xs text-g-grey-dark w-full">
                 <div class="font-bold text-g-grey tracking-widest uppercase text-[10px]">
                     Luminair Environment Hub
                 </div>
                 <div class="flex flex-wrap items-center justify-center gap-4 text-[10px] font-medium">
                     <span class="text-g-grey uppercase tracking-widest font-bold mr-1">Powered By:</span>
                     <a href="https://openweathermap.org/" target="_blank" class="hover:opacity-70 transition-opacity flex items-center gap-1.5 group">
-                        <img src="/src/assets/icons/logo-openweathermap.png" class="h-3.5 object-contain" alt="OpenWeatherMap">
+                        <img src="/src/assets/icons/logo-openweathermap.png" class="h-3.5 object-contain" alt="OpenWeatherMap" onerror="this.style.display='none'">
                         <span class="group-hover:text-g-blue-medium transition-colors">OpenWeatherMap</span>
                     </a>
                     <span class="text-g-grey-light">|</span>
                     <a href="https://uvindexapi.com/" target="_blank" class="hover:opacity-70 transition-opacity flex items-center gap-1.5 group">
-                        <img src="/src/assets/icons/logo-uvindexapi.png" class="h-3.5 object-contain" alt="UVIndexAPI">
+                        <img src="/src/assets/icons/logo-uvindexapi.png" class="h-3.5 object-contain" alt="UVIndexAPI" onerror="this.style.display='none'">
                         <span class="group-hover:text-g-blue-medium transition-colors">UVIndexAPI</span>
                     </a>
                     <span class="text-g-grey-light">|</span>
                     <a href="https://waqi.info/" target="_blank" class="hover:opacity-70 transition-opacity flex items-center gap-1.5 group">
-                        <img src="/src/assets/icons/logo_waqi.png" class="h-3.5 object-contain" alt="WAQI">
+                        <img src="/src/assets/icons/logo_waqi.png" class="h-3.5 object-contain" alt="WAQI" onerror="this.style.display='none'">
                         <span class="group-hover:text-g-blue-medium transition-colors">WAQI</span>
                     </a>
                     <span class="text-g-grey-light">|</span>
                     <a href="https://deepmind.google/models/gemini" target="_blank" class="hover:opacity-70 transition-opacity flex items-center gap-1.5 group">
-                        <img src="https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/google-gemini.svg" class="h-3.5 object-contain" alt="Google Gemini">
+                        <img src="https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/google-gemini.svg" class="h-3.5 object-contain" alt="Google Gemini" onerror="this.style.display='none'">
                         <span class="group-hover:text-g-blue-medium transition-colors">Google Gemini 3.5</span>
                     </a>
                     <span class="text-g-grey-light">|</span>
                     <a href="https://leafletjs.com/" target="_blank" class="hover:opacity-70 transition-opacity flex items-center gap-1.5 group">
-                        <img src="/src/assets/icons/logo-leaflet.png" class="h-3.5 object-contain" alt="Leaflet">
+                        <img src="/src/assets/icons/logo-leaflet.png" class="h-3.5 object-contain" alt="Leaflet" onerror="this.style.display='none'">
                         <span class="group-hover:text-g-blue-medium transition-colors">Leaflet</span>
+                    </a>
+                    <span class="text-g-grey-light">|</span>
+                    <a href="https://www.flaticon.com/packs/weather-482" target="_blank" class="hover:opacity-70 transition-opacity flex items-center gap-1.5 group">
+                        <img src="/src/assets/icons/logo-flaticon.png" class="h-3.5 object-contain" alt="Flaticon" onerror="this.style.display='none'">
+                        <span class="group-hover:text-g-blue-medium transition-colors">Flaticon</span>
                     </a>
                 </div>
             </div>
         </div>
+
     </main>
 
-    <!-- Map Modal -->
-    <div id="map-modal" class="hidden fixed inset-0 z-[200] bg-g-black/80 backdrop-blur-sm flex items-center justify-center">
-        <div class="bg-white rounded-2xl w-full max-w-2xl overflow-hidden shadow-2xl m-4 border border-g-grey-light">
-            <div class="p-4 border-b border-g-grey-light flex justify-between items-center flex-wrap gap-2">
-                <h3 class="font-bold text-g-black flex items-center gap-2">Select Location <span class="bg-[#F8F9FA] border border-g-grey-light text-g-grey-dark px-1.5 py-0.5 rounded text-[8px] tracking-normal normal-case font-medium shadow-sm hidden sm:inline-block">map: <span class="font-bold text-g-black">Leaflet + WAQI</span></span></h3>
-                <button id="btn-close-map" class="text-g-grey hover:text-g-red-medium text-2xl leading-none">&times;</button>
-            </div>
-            <div id="map-view" class="w-full h-96 bg-[#F8F9FA]"></div>
-            <div class="p-4 bg-[#F8F9FA] flex justify-end gap-3 border-t border-g-grey-light">
-                <button id="btn-cancel-map" class="px-4 py-2 text-sm font-medium text-g-grey-dark hover:bg-g-grey-light rounded-lg">Cancel</button>
-                <button id="btn-confirm-map" disabled class="px-4 py-2 text-sm font-medium text-white bg-g-blue-medium hover:bg-g-blue rounded-lg disabled:opacity-50 disabled:cursor-not-allowed">Confirm location</button>
-            </div>
-        </div>
-    </div>
+    <!-- Dummy Modal elements to satisfy the main.js requirements cleanly -->
+    <div id="map-modal" class="hidden"></div>
+    <button id="btn-map-toggle" class="hidden"></button>
+    <button id="btn-close-map" class="hidden"></button>
+    <button id="btn-cancel-map" class="hidden"></button>
 
     <!-- Leaflet JS -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>

@@ -1,6 +1,7 @@
 import { state } from './state.js';
 import { initCanvas } from './canvas.js';
 import { performLocationSync, fetchLocationName, fetchRealAirData, analyzeAirWithGemini, searchLocation } from './api.js';
+import { initGlobalTooltip } from './utils.js';
 
 const startAutoSync = () => {
     if (state.syncIntervalId) clearInterval(state.syncIntervalId);
@@ -29,7 +30,7 @@ function startLiveClock() {
         const dateStr = now.toLocaleDateString('en-US', dateOpts);
         const timeStr = now.toLocaleTimeString('en-US', timeOpts);
         
-        clockEl.innerText = `${dateStr} ${timeStr}`;
+        clockEl.innerHTML = `<span>${dateStr}</span><span>${timeStr}</span>`;
     }, 1000);
 }
 
@@ -49,6 +50,14 @@ function initMapModal() {
             if(!map) {
                 if (typeof L === 'undefined') return;
                 
+                // Inject custom style to shrink leaflet attribution and avoid overlap
+                if (!document.getElementById('leaflet-custom-style')) {
+                    const style = document.createElement('style');
+                    style.id = 'leaflet-custom-style';
+                    style.innerHTML = '.leaflet-control-attribution { font-size: 7px !important; background: rgba(255,255,255,0.5) !important; backdrop-filter: blur(2px); line-height: 1.2 !important; padding: 0 4px !important; border-top-left-radius: 4px; }';
+                    document.head.appendChild(style);
+                }
+                
                 // Initialize main leaflet map
                 map = L.map('map-view').setView([state.currentLat, state.currentLon], 10);
                 
@@ -64,18 +73,18 @@ function initMapModal() {
                     zIndex: 100
                 }).addTo(map);
                 
-                // 3. Gorgeous Translucent Color Legend
+                // 3. Compact & Translucent Color Legend
                 const legend = L.control({ position: 'bottomleft' });
                 legend.onAdd = function() {
-                    const div = L.DomUtil.create('div', 'info legend p-3 bg-white/90 backdrop-blur-md rounded-xl text-[10px] font-semibold border border-g-grey-light flex flex-col gap-1.5 shadow-lg');
+                    const div = L.DomUtil.create('div', 'info legend p-1 bg-white/30 hover:bg-white/95 transition-all duration-300 backdrop-blur-sm rounded-md text-[7px] text-g-black font-medium border border-white/40 flex flex-col gap-0.5 shadow-sm mb-5 ml-1 cursor-default pointer-events-auto');
                     div.innerHTML = `
-                        <div class="text-[9px] font-bold uppercase text-g-grey-dark mb-1 tracking-wider">AQI Heatmap Legend</div>
-                        <div class="flex items-center gap-2"><span class="w-3 h-3 rounded-full" style="background:#009966"></span><span>Good (0-50)</span></div>
-                        <div class="flex items-center gap-2"><span class="w-3 h-3 rounded-full" style="background:#ffde33"></span><span>Moderate (51-100)</span></div>
-                        <div class="flex items-center gap-2"><span class="w-3 h-3 rounded-full" style="background:#ff9933"></span><span>Unhealthy Sensitive (101-150)</span></div>
-                        <div class="flex items-center gap-2"><span class="w-3 h-3 rounded-full" style="background:#cc0033"></span><span>Unhealthy (151-200)</span></div>
-                        <div class="flex items-center gap-2"><span class="w-3 h-3 rounded-full" style="background:#660099"></span><span>Very Unhealthy (201-300)</span></div>
-                        <div class="flex items-center gap-2"><span class="w-3 h-3 rounded-full" style="background:#7e0023"></span><span>Hazardous (300+)</span></div>
+                        <div class="text-[6px] font-bold uppercase text-g-grey-dark tracking-wider mb-0.5">AQI Legend</div>
+                        <div class="flex items-center gap-1.5"><span class="w-1.5 h-1.5 rounded-full shrink-0" style="background:#009966"></span><span class="leading-none">Good (0-50)</span></div>
+                        <div class="flex items-center gap-1.5"><span class="w-1.5 h-1.5 rounded-full shrink-0" style="background:#ffde33"></span><span class="leading-none">Mod. (51-100)</span></div>
+                        <div class="flex items-center gap-1.5"><span class="w-1.5 h-1.5 rounded-full shrink-0" style="background:#ff9933"></span><span class="leading-none">Unhealthy Sens. (101-150)</span></div>
+                        <div class="flex items-center gap-1.5"><span class="w-1.5 h-1.5 rounded-full shrink-0" style="background:#cc0033"></span><span class="leading-none">Unhealthy (151-200)</span></div>
+                        <div class="flex items-center gap-1.5"><span class="w-1.5 h-1.5 rounded-full shrink-0" style="background:#660099"></span><span class="leading-none">V. Unhealthy (201-300)</span></div>
+                        <div class="flex items-center gap-1.5"><span class="w-1.5 h-1.5 rounded-full shrink-0" style="background:#7e0023"></span><span class="leading-none">Hazardous (300+)</span></div>
                     `;
                     return div;
                 };
@@ -87,13 +96,19 @@ function initMapModal() {
                     tempLat = e.latlng.lat;
                     tempLon = e.latlng.lng;
                     marker.setLatLng([tempLat, tempLon]);
-                    if (confirmBtn) confirmBtn.disabled = false;
+                    if (confirmBtn) {
+                        confirmBtn.disabled = false;
+                        confirmBtn.classList.remove('opacity-0', 'pointer-events-none');
+                    }
                 });
             } else {
                 map.invalidateSize();
                 map.setView([state.currentLat, state.currentLon], 10);
                 marker.setLatLng([state.currentLat, state.currentLon]);
-                if (confirmBtn) confirmBtn.disabled = true;
+                if (confirmBtn) {
+                    confirmBtn.disabled = true;
+                    confirmBtn.classList.add('opacity-0', 'pointer-events-none');
+                }
             }
         }, 100);
     };
@@ -110,7 +125,11 @@ function initMapModal() {
         confirmBtn.addEventListener('click', async () => {
             state.currentLat = tempLat;
             state.currentLon = tempLon;
-            closeModal();
+            
+            // Hide selection button
+            confirmBtn.disabled = true;
+            confirmBtn.classList.add('opacity-0', 'pointer-events-none');
+            
             const locName = document.getElementById('location-name');
             if (locName) locName.innerText = "Locating on Map...";
             if (locName) locName.innerText = await fetchLocationName(tempLat, tempLon);
@@ -123,8 +142,23 @@ function initMapModal() {
 function initApp() {
     initCanvas();
     initMapModal();
-    startLiveClock(); // Initialize the live clock loop
+    initGlobalTooltip(); 
+    startLiveClock(); 
     
+    const mapToggle = document.getElementById('btn-map-toggle');
+    
+    // Initial map load trigger
+    setTimeout(() => { if (mapToggle) mapToggle.click(); }, 800);
+    
+    // Observe live GPS coordinate changes to actively re-center the widget map
+    const latEl = document.getElementById('geo-lat');
+    if (latEl) {
+        const observer = new MutationObserver(() => {
+            if (mapToggle) mapToggle.click();
+        });
+        observer.observe(latEl, { childList: true, characterData: true, subtree: true });
+    }
+
     performLocationSync().then(startAutoSync);
 
     // Bind AI Profile Selector Buttons
@@ -136,11 +170,11 @@ function initApp() {
             
             state.userProfile = profile;
             
-            // Toggle active classes for UI feedback
+            // Toggle active classes for UI feedback (matching the tiny bento sizes)
             profileBtns.forEach(b => {
-                b.className = 'profile-btn bg-white/5 text-g-grey-light border-white/10 hover:bg-white/10 px-4 py-1.5 rounded-full border text-xs font-semibold transition-colors';
+                b.className = 'profile-btn bg-white/5 text-g-grey-light border-white/10 hover:bg-white/10 px-2 py-0.5 rounded-full border text-[8px] font-semibold transition-colors';
             });
-            e.target.className = 'profile-btn active bg-g-blue-medium text-white border-g-blue-medium px-4 py-1.5 rounded-full border text-xs font-semibold transition-colors shadow-sm';
+            e.target.className = 'profile-btn active bg-g-blue-medium text-white border-g-blue-medium px-2 py-0.5 rounded-full border text-[8px] font-semibold transition-colors shadow-sm';
             
             // Re-fetch the Gemini evaluation with the newly selected profile
             analyzeAirWithGemini();

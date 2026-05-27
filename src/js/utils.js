@@ -2,11 +2,31 @@ import { state } from './state.js';
 
 export function getAQIColorAndLabel(aqi) {
     // Colors mapped exactly to Google News Custom Palette for International AQI (1-5)
-    if (aqi === 1) return { color: '#34A853', label: 'Good', border: 'border-g-green-medium/30', text: 'text-g-green-medium', bg: 'bg-g-green-light/30' };
-    if (aqi === 2) return { color: '#FBBC04', label: 'Fair', border: 'border-g-yellow/50', text: 'text-g-yellow', bg: 'bg-g-yellow-light/30' };
-    if (aqi === 3) return { color: '#E37400', label: 'Moderate', border: 'border-g-orange/30', text: 'text-g-orange', bg: 'bg-g-orange/10' };
-    if (aqi === 4) return { color: '#EA4335', label: 'Poor', border: 'border-g-red-medium/30', text: 'text-g-red-medium', bg: 'bg-g-red-light/30' };
-    return { color: '#A50E0E', label: 'Very Poor', border: 'border-g-red', text: 'text-g-red', bg: 'bg-g-red-light/80' };
+    if (aqi === 1) return { 
+        color: '#34A853', label: 'Good', border: 'border-g-green-medium/30', text: 'text-g-green-medium', bg: 'bg-g-green-light/30',
+        desc: 'Air quality is considered satisfactory, and air pollution poses little or no risk.',
+        advice: 'Ideal air quality. Enjoy your normal outdoor activities.'
+    };
+    if (aqi === 2) return { 
+        color: '#FBBC04', label: 'Fair', border: 'border-g-yellow/50', text: 'text-g-yellow', bg: 'bg-g-yellow-light/30',
+        desc: 'Air quality is acceptable; however, there may be a moderate health concern for a very small number of people who are unusually sensitive.',
+        advice: 'Good day for outdoor activities. Unusually sensitive people should consider reducing prolonged exertion.'
+    };
+    if (aqi === 3) return { 
+        color: '#E37400', label: 'Moderate', border: 'border-g-orange/30', text: 'text-g-orange', bg: 'bg-g-orange/10',
+        desc: 'Members of sensitive groups may experience health effects. The general public is not likely to be affected.',
+        advice: 'Active children and adults, and people with respiratory disease, such as asthma, should limit prolonged outdoor exertion.'
+    };
+    if (aqi === 4) return { 
+        color: '#EA4335', label: 'Poor', border: 'border-g-red-medium/30', text: 'text-g-red-medium', bg: 'bg-g-red-light/30',
+        desc: 'Some members of the general public may experience health effects; sensitive groups may experience more serious health effects.',
+        advice: 'High pollution. Everyone should consider limiting strenuous workout outdoor and wear particulate masks (N95).'
+    };
+    return { 
+        color: '#A50E0E', label: 'Very Poor', border: 'border-g-red', text: 'text-g-red', bg: 'bg-g-red-light/80',
+        desc: 'Health warnings of emergency conditions. The entire population is more likely to be affected.',
+        advice: 'Hazardous conditions. Avoid all outdoor exertion. Remain indoors and keep windows closed.'
+    };
 }
 
 export function updateDateTime() {
