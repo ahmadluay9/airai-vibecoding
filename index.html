@@ -59,7 +59,7 @@
     </header>
 
     <!-- Main Container -->
-    <main class="max-w-[1400px] mx-auto w-full relative z-10 pb-20">
+    <main class="max-w-[1400px] mx-auto w-full relative z-10 pb-8">
         
         <!-- Presets Row -->
         <div class="px-6 sm:px-10 py-5 flex items-center gap-3 overflow-x-auto scrollbar-hide">
@@ -78,8 +78,13 @@
             <div class="lg:col-span-8 bg-white/95 backdrop-blur-md border border-g-grey-light rounded-3xl p-8 card-shadow flex flex-col h-full">
                 <div class="flex justify-between items-start mb-8">
                     <div>
-                        <div class="text-[10px] font-bold text-g-grey tracking-widest uppercase">Atmospheric Health</div>
-                        <h2 class="text-xl font-bold text-g-black">Air Quality Index</h2>
+                        <div class="text-[10px] font-bold text-g-grey tracking-widest uppercase flex items-center gap-2 flex-wrap">
+                            Atmospheric Health 
+                            <span class="bg-[#F8F9FA] border border-g-grey-light text-g-grey-dark px-1.5 py-0.5 rounded text-[8px] tracking-normal normal-case font-medium shadow-sm flex items-center gap-1">
+                                <img src="/src/assets/icons/logo-openweathermap.png" alt="OpenWeatherMap" class="h-2.5 object-contain inline-block" onerror="this.outerHTML='<span class=\'font-bold text-g-black\'>OpenWeatherMap</span>'">
+                            </span>
+                        </div>
+                        <h2 class="text-xl font-bold text-g-black mt-1">Air Quality Index</h2>
                     </div>
                     <div class="bg-[#F8F9FA] border border-g-grey-light px-3 py-1 rounded-full text-[10px] font-bold text-g-grey-dark uppercase tracking-widest flex items-center gap-2">
                         <span class="w-2 h-2 rounded-full bg-g-green-medium animate-pulse"></span> Live Feed
@@ -112,8 +117,13 @@
             <!-- Col 2: Geo Ledger & Status -->
             <div class="lg:col-span-4 bg-white/95 backdrop-blur-md border border-g-grey-light rounded-3xl p-8 card-shadow flex flex-col">
                 <div class="mb-8">
-                    <div class="text-[10px] font-bold text-g-grey tracking-widest uppercase">Location Ledger</div>
-                    <h2 class="text-xl font-bold text-g-black">Geographic Info</h2>
+                    <div class="text-[10px] font-bold text-g-grey tracking-widest uppercase flex items-center gap-2 flex-wrap">
+                        Location Ledger 
+                        <span class="bg-[#F8F9FA] border border-g-grey-light text-g-grey-dark px-1.5 py-0.5 rounded text-[8px] tracking-normal normal-case font-medium shadow-sm flex items-center gap-1">
+                            <img src="/src/assets/icons/logo-openweathermap.png" alt="OpenWeatherMap" class="h-2.5 object-contain inline-block" onerror="this.outerHTML='<span class=\'font-bold text-g-black\'>OpenWeatherMap</span>'">
+                        </span>
+                    </div>
+                    <h2 class="text-xl font-bold text-g-black mt-1">Geographic Info</h2>
                     <p class="text-xs text-g-grey-dark mt-2">Observing local space relative to maritime and terrain currents.</p>
                 </div>
 
@@ -131,19 +141,30 @@
         <!-- Environmental Conditions Context Row -->
         <div class="px-6 sm:px-10 pt-6 grid grid-cols-1 md:grid-cols-3 gap-6">
             <div class="bg-white/95 backdrop-blur-md border border-g-grey-light rounded-2xl p-6 card-shadow flex flex-col items-center justify-center text-center group hover:border-g-blue-medium transition-colors">
-                <span class="text-2xl mb-2 grayscale opacity-80 group-hover:grayscale-0 group-hover:opacity-100 transition-all">💨</span>
+                <img src="/src/assets/icons/wind-direction.png" alt="Wind" class="w-8 h-8 mb-2 grayscale opacity-80 group-hover:grayscale-0 group-hover:opacity-100 transition-all">
                 <span class="text-[10px] font-bold text-g-grey uppercase tracking-widest">Wind</span>
-                <span id="env-wind" class="text-xl font-bold text-g-black mt-1">-</span>
+                <span id="env-wind" class="text-xl font-bold text-g-black mt-1 leading-none">-</span>
+                <div class="bg-[#F8F9FA] border border-g-grey-light text-g-grey-dark px-2 py-1 rounded shadow-sm mt-3 flex items-center justify-center">
+                    <img src="/src/assets/icons/logo-openweathermap.png" alt="OpenWeatherMap" class="h-2.5 object-contain" onerror="this.outerHTML='<span class=\'text-[8px] font-bold text-g-black uppercase tracking-widest\'>OWM</span>'">
+                </div>
             </div>
+
             <div class="bg-white/95 backdrop-blur-md border border-g-grey-light rounded-2xl p-6 card-shadow flex flex-col items-center justify-center text-center group hover:border-g-blue-medium transition-colors">
-                <span class="text-2xl mb-2 grayscale opacity-80 group-hover:grayscale-0 group-hover:opacity-100 transition-all">💧</span>
+                <img src="/src/assets/icons/humidity.png" alt="Humidity" class="w-8 h-8 mb-2 grayscale opacity-80 group-hover:grayscale-0 group-hover:opacity-100 transition-all">
                 <span class="text-[10px] font-bold text-g-grey uppercase tracking-widest">Humidity</span>
-                <span id="env-humidity" class="text-xl font-bold text-g-black mt-1">-</span>
+                <span id="env-humidity" class="text-xl font-bold text-g-black mt-1 leading-none">-</span>
+                <div class="bg-[#F8F9FA] border border-g-grey-light text-g-grey-dark px-2 py-1 rounded shadow-sm mt-3 flex items-center justify-center">
+                    <img src="/src/assets/icons/logo-openweathermap.png" alt="OpenWeatherMap" class="h-2.5 object-contain" onerror="this.outerHTML='<span class=\'text-[8px] font-bold text-g-black uppercase tracking-widest\'>OWM</span>'">
+                </div>
             </div>
+
             <div class="bg-white/95 backdrop-blur-md border border-g-grey-light rounded-2xl p-6 card-shadow flex flex-col items-center justify-center text-center group hover:border-g-blue-medium transition-colors">
-                <span class="text-2xl mb-2 grayscale opacity-80 group-hover:grayscale-0 group-hover:opacity-100 transition-all">☀️</span>
+                <img src="/src/assets/icons/sun.png" alt="UV Index" class="w-8 h-8 mb-2 grayscale opacity-80 group-hover:grayscale-0 group-hover:opacity-100 transition-all">
                 <span class="text-[10px] font-bold text-g-grey uppercase tracking-widest">UV Index</span>
-                <span id="env-uv" class="text-xl font-bold text-g-black mt-1">-</span>
+                <span id="env-uv" class="text-xl font-bold text-g-black mt-1 leading-none">-</span>
+                <div class="bg-[#F8F9FA] border border-g-grey-light text-g-grey-dark px-2 py-1 rounded shadow-sm mt-3 flex items-center justify-center">
+                    <img src="/src/assets/icons/logo-uvindexapi.png" alt="UVIndexAPI" class="h-2.5 object-contain" onerror="this.outerHTML='<span class=\'text-[8px] font-bold text-g-black uppercase tracking-widest\'>UVIndexAPI</span>'">
+                </div>
             </div>
         </div>
 
@@ -151,10 +172,15 @@
         <div class="px-6 sm:px-10 py-10">
             <div class="flex justify-between items-end mb-6">
                 <div>
-                    <div class="text-[10px] font-bold text-g-grey tracking-widest uppercase">Active Metrics</div>
-                    <h2 class="text-xl font-bold text-g-black">Chemical Pollutant Breakdown</h2>
+                    <div class="text-[10px] font-bold text-g-grey tracking-widest uppercase flex items-center gap-2 flex-wrap">
+                        Active Metrics 
+                        <span class="bg-[#F8F9FA] border border-g-grey-light text-g-grey-dark px-1.5 py-0.5 rounded text-[8px] tracking-normal normal-case font-medium shadow-sm flex items-center gap-1">
+                            <img src="/src/assets/icons/logo-openweathermap.png" alt="OpenWeatherMap" class="h-2.5 object-contain inline-block" onerror="this.outerHTML='<span class=\'font-bold text-g-black\'>OpenWeatherMap</span>'">
+                        </span>
+                    </div>
+                    <h2 class="text-xl font-bold text-g-black mt-1">Chemical Pollutant Breakdown</h2>
                 </div>
-                <div class="text-xs text-g-grey-dark">Compared against <span class="font-bold text-g-black">WHO Guidelines</span></div>
+                <div class="text-xs text-g-grey-dark hidden sm:block">Compared against <span class="font-bold text-g-black">WHO Guidelines</span></div>
             </div>
 
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -225,7 +251,12 @@
         <div class="px-6 sm:px-10 pb-10 grid grid-cols-1 md:grid-cols-2 gap-6">
             <div class="bg-white/95 backdrop-blur-md border border-g-grey-light rounded-2xl p-6 card-shadow">
                 <div class="flex justify-between items-center mb-4">
-                    <span class="text-[10px] font-bold text-g-grey uppercase tracking-widest">Prediksi PM2.5 (24 Jam)</span>
+                    <span class="text-[10px] font-bold text-g-grey uppercase tracking-widest flex items-center gap-2">
+                        Prediksi PM2.5 (24 Jam)
+                        <span class="bg-[#F8F9FA] border border-g-grey-light text-g-grey-dark px-1.5 py-0.5 rounded text-[8px] tracking-normal normal-case font-medium shadow-sm hidden sm:flex items-center gap-1">
+                            <img src="/src/assets/icons/logo-openweathermap.png" alt="OpenWeatherMap" class="h-2.5 object-contain inline-block" onerror="this.outerHTML='<span class=\'font-bold text-g-black\'>OWM</span>'">
+                        </span>
+                    </span>
                     <span class="text-[10px] text-g-blue-medium flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-g-blue-medium animate-pulse"></span> Forecast</span>
                 </div>
                 <canvas id="pm25-sparkline" width="600" height="60" class="w-full h-[60px]"></canvas>
@@ -233,7 +264,12 @@
             
             <div class="bg-white/95 backdrop-blur-md border border-g-grey-light rounded-2xl p-6 card-shadow">
                 <div class="flex justify-between items-center mb-4">
-                    <span class="text-[10px] font-bold text-g-grey uppercase tracking-widest">Prakiraan Cuaca (24 Jam)</span>
+                    <span class="text-[10px] font-bold text-g-grey uppercase tracking-widest flex items-center gap-2">
+                        Prakiraan Cuaca (24 Jam)
+                        <span class="bg-[#F8F9FA] border border-g-grey-light text-g-grey-dark px-1.5 py-0.5 rounded text-[8px] tracking-normal normal-case font-medium shadow-sm hidden sm:flex items-center gap-1">
+                            <img src="/src/assets/icons/logo-openweathermap.png" alt="OpenWeatherMap" class="h-2.5 object-contain inline-block" onerror="this.outerHTML='<span class=\'font-bold text-g-black\'>OWM</span>'">
+                        </span>
+                    </span>
                     <span class="text-[10px] text-g-grey-dark">Suhu & Kondisi</span>
                 </div>
                 <div id="weather-forecast-container" class="flex overflow-x-auto gap-3 pb-2 scrollbar-hide min-h-[70px]"></div>
@@ -252,11 +288,14 @@
                 <!-- AI Content State -->
                 <div id="ai-content-block" class="relative z-10">
                     <div class="flex items-center gap-3 mb-8">
-                        <div class="w-10 h-10 rounded-lg bg-g-blue-medium/20 flex items-center justify-center">
+                        <div class="w-10 h-10 rounded-lg bg-g-blue-medium/20 flex items-center justify-center shrink-0">
                             <img src="https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/google-gemini.svg" alt="Gemini AI" class="w-6 h-6 object-contain" />
                         </div>
                         <div>
-                            <div class="text-[10px] font-bold text-g-blue-medium tracking-widest uppercase">AI Cognitive Guard</div>
+                            <div class="text-[10px] font-bold text-g-blue-medium tracking-widest uppercase flex items-center gap-2 flex-wrap">
+                                AI Cognitive Guard
+                                <span class="bg-g-blue-medium/20 border border-g-blue-medium/30 text-g-blue-light px-1.5 py-0.5 rounded text-[8px] tracking-normal normal-case font-medium shadow-sm">Model: <span class="font-bold text-white">Google Gemini 3.5 Flash</span></span>
+                            </div>
                             <h2 class="text-2xl font-black text-white leading-none mt-1">AI Clinician Advisory</h2>
                         </div>
                     </div>
@@ -293,13 +332,49 @@
                 </div>
             </div>
         </div>
+
+        <!-- Data Sources Footer -->
+        <div class="px-6 sm:px-10 pb-6">
+            <div class="bg-white/60 backdrop-blur-sm border border-g-grey-light rounded-2xl p-6 flex flex-col md:flex-row justify-between items-center gap-4 text-xs text-g-grey-dark">
+                <div class="font-bold text-g-grey tracking-widest uppercase text-[10px]">
+                    Luminair Environment Hub
+                </div>
+                <div class="flex flex-wrap items-center justify-center gap-4 text-[10px] font-medium">
+                    <span class="text-g-grey uppercase tracking-widest font-bold mr-1">Powered By:</span>
+                    <a href="https://openweathermap.org/" target="_blank" class="hover:opacity-70 transition-opacity flex items-center gap-1.5 group">
+                        <img src="/src/assets/icons/logo-openweathermap.png" class="h-3.5 object-contain" alt="OpenWeatherMap">
+                        <span class="group-hover:text-g-blue-medium transition-colors">OpenWeatherMap</span>
+                    </a>
+                    <span class="text-g-grey-light">|</span>
+                    <a href="https://uvindexapi.com/" target="_blank" class="hover:opacity-70 transition-opacity flex items-center gap-1.5 group">
+                        <img src="/src/assets/icons/logo-uvindexapi.png" class="h-3.5 object-contain" alt="UVIndexAPI">
+                        <span class="group-hover:text-g-blue-medium transition-colors">UVIndexAPI</span>
+                    </a>
+                    <span class="text-g-grey-light">|</span>
+                    <a href="https://waqi.info/" target="_blank" class="hover:opacity-70 transition-opacity flex items-center gap-1.5 group">
+                        <img src="/src/assets/icons/logo_waqi.png" class="h-3.5 object-contain" alt="WAQI">
+                        <span class="group-hover:text-g-blue-medium transition-colors">WAQI</span>
+                    </a>
+                    <span class="text-g-grey-light">|</span>
+                    <a href="https://deepmind.google/models/gemini" target="_blank" class="hover:opacity-70 transition-opacity flex items-center gap-1.5 group">
+                        <img src="https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/google-gemini.svg" class="h-3.5 object-contain" alt="Google Gemini">
+                        <span class="group-hover:text-g-blue-medium transition-colors">Google Gemini 3.5</span>
+                    </a>
+                    <span class="text-g-grey-light">|</span>
+                    <a href="https://leafletjs.com/" target="_blank" class="hover:opacity-70 transition-opacity flex items-center gap-1.5 group">
+                        <img src="/src/assets/icons/logo-leaflet.png" class="h-3.5 object-contain" alt="Leaflet">
+                        <span class="group-hover:text-g-blue-medium transition-colors">Leaflet</span>
+                    </a>
+                </div>
+            </div>
+        </div>
     </main>
 
     <!-- Map Modal -->
     <div id="map-modal" class="hidden fixed inset-0 z-[200] bg-g-black/80 backdrop-blur-sm flex items-center justify-center">
         <div class="bg-white rounded-2xl w-full max-w-2xl overflow-hidden shadow-2xl m-4 border border-g-grey-light">
-            <div class="p-4 border-b border-g-grey-light flex justify-between items-center">
-                <h3 class="font-bold text-g-black">Select Location</h3>
+            <div class="p-4 border-b border-g-grey-light flex justify-between items-center flex-wrap gap-2">
+                <h3 class="font-bold text-g-black flex items-center gap-2">Select Location <span class="bg-[#F8F9FA] border border-g-grey-light text-g-grey-dark px-1.5 py-0.5 rounded text-[8px] tracking-normal normal-case font-medium shadow-sm hidden sm:inline-block">map: <span class="font-bold text-g-black">Leaflet + WAQI</span></span></h3>
                 <button id="btn-close-map" class="text-g-grey hover:text-g-red-medium text-2xl leading-none">&times;</button>
             </div>
             <div id="map-view" class="w-full h-96 bg-[#F8F9FA]"></div>
