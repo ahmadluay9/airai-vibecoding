@@ -1,5 +1,5 @@
 import { state } from './state.js';
-import { updateUI, drawSparkline } from './ui.js';
+import { updateUI, drawSparkline, renderWeatherForecast, renderPM25Sparkline } from './ui.js';
 import { updateDateTime } from './utils.js';
 
 // Helper to forcefully update the UI element directly during fetches
@@ -14,11 +14,34 @@ function updateApiStatusUI(statusMsg) {
     }
 }
 
+// Helper to gracefully move AI API Status above the Profile Selectors
+function updateAiApiStatus(message, isError = false) {
+    const selectors = ['profile-selector', 'modal-profile-selector'];
+    
+    selectors.forEach(selectorId => {
+        const selector = document.getElementById(selectorId);
+        if (selector && selector.parentElement && selector.parentElement.parentNode) {
+            let statusEl = document.getElementById(`ai-api-status-banner-${selectorId}`);
+            if (!statusEl) {
+                statusEl = document.createElement('div');
+                statusEl.id = `ai-api-status-banner-${selectorId}`;
+                selector.parentElement.parentNode.insertBefore(statusEl, selector.parentElement);
+            }
+            
+            if (!message) {
+                statusEl.innerHTML = '';
+            } else {
+                const textColor = isError ? 'text-g-red-light/70' : 'text-g-green-light/70';
+                statusEl.innerHTML = `<span class="block text-[9px] font-mono ${textColor} mb-1.5">API Status: ${message}</span>`;
+            }
+        }
+    });
+}
+
 export async function fetchLocationName(lat, lon) {
     if (!state.API_KEY || state.API_KEY === '') return `Lat: ${lat.toFixed(2)}, Lon: ${lon.toFixed(2)}`;
     
     try {
-        // Replaced Nominatim with OpenWeatherMap Reverse Geocoding to prevent localhost blocks
         const res = await fetch(`https://api.openweathermap.org/geo/1.0/reverse?lat=${lat}&lon=${lon}&limit=1&appid=${state.API_KEY}`);
         const data = await res.json();
         if (data && data.length > 0) {
@@ -58,7 +81,6 @@ export async function safeFetch(url, mockData) {
             return mockData;
         }
         const data = await res.json();
-        // Using loose inequality (!=) perfectly handles both String and Number "200" responses
         if (data.cod && data.cod != 200) {
             state.apiStatus = 'Demo (Live API Failed)';
             updateApiStatusUI(state.apiStatus);
@@ -90,11 +112,9 @@ export async function fetchRealAirData(lat, lon) {
         const headerWeather = document.getElementById('header-weather');
         if (headerWeather) {
             const iconUrl = `https://openweathermap.org/img/wn/${iconCode}@2x.png`;
-            // Added a much stronger custom drop-shadow for the header icon
             headerWeather.innerHTML = `<img src="${iconUrl}" alt="${condition}" class="w-6 h-6 inline-block object-contain drop-shadow-[0_2px_3px_rgba(0,0,0,0.4)] -mt-0.5 mr-1" /> ${Math.round(weatherData.main.temp)}°C <span class="mx-2 text-g-grey-light">|</span> ${weatherData.weather[0].description.toUpperCase()}`;
         }
 
-        // --- Environmental Details Update (Now strictly using OpenWeatherMap native wind speed & direction) ---
         const windSpeed = weatherData.wind?.speed || 0;
         const windDeg = weatherData.wind?.deg || 0;
 
@@ -102,14 +122,12 @@ export async function fetchRealAirData(lat, lon) {
         const windDir = compassDirs[Math.round(windDeg / 45) % 8];
         const humidity = weatherData.main?.humidity || 0;
         
-        // Extract new extended data points
         const feelsLike = weatherData.main?.feels_like || 0;
         const pressure = weatherData.main?.pressure || 0;
         const visibility = weatherData.visibility || 0;
         const sunrise = weatherData.sys?.sunrise || 0;
         const sunset = weatherData.sys?.sunset || 0;
 
-        // Fetch Live UV Index using the provided API endpoint
         let uvIndex = 0;
         try {
             const uvUrl = `https://uvindexapi.com/api/v1/forecast?latitude=${lat}&longitude=${lon}&timezone=Auto`;
@@ -118,17 +136,14 @@ export async function fetchRealAirData(lat, lon) {
             if (!uvRes.ok) throw new Error("UV API not reachable");
             const uvData = await uvRes.json();
             
-            // Extract the UV Index from the "now" object
             if (uvData && uvData.now && uvData.now.uv_index !== undefined) {
                 uvIndex = Math.round(uvData.now.uv_index);
             }
         } catch (e) {
-            // Realistic fallback simulation if the UV API/Proxy is unavailable
-            /*
-            uvIndex = state.isDayTime && !['Rain', 'Thunderstorm'].includes(condition) 
+            // Realistic fallback simulation activated if the free UV API/Proxy limits out
+            uvIndex = state.isDayTime && !['Rain', 'Thunderstorm', 'Drizzle'].includes(condition) 
                 ? Math.min(Math.max(Math.round((weatherData.main.temp - 15) / 2.5 + Math.random() * 2), 0), 11) 
                 : 0; 
-            */
         }
 
         const envWind = document.getElementById('env-wind');
@@ -145,7 +160,6 @@ export async function fetchRealAirData(lat, lon) {
             envHumidity.setAttribute('data-js-tooltip', `Humidity: ${humidity}%<br><span class='text-[10px] text-g-grey'>Level: ${humLevel}</span>`);
         }
         
-        // Update extended tiles
         const envFeelsLike = document.getElementById('env-feels-like');
         if (envFeelsLike) {
             envFeelsLike.innerText = `${Math.round(feelsLike)}°C`;
@@ -193,7 +207,6 @@ export async function fetchRealAirData(lat, lon) {
         const envUv = document.getElementById('env-uv');
         if (envUv) {
             envUv.innerText = uvIndex;
-            // Keeps typography classes identical to Wind and Humidity while changing color
             envUv.className = `text-xs font-bold leading-none cursor-help border-b border-dashed border-g-grey/60 pb-px ${uvIndex >= 8 ? 'text-g-red-medium' : (uvIndex >= 5 ? 'text-g-orange' : 'text-g-black')}`;
             let uvLevel = uvIndex <= 2 ? "low (0-2)" : (uvIndex <= 5 ? "moderate (3-5)" : (uvIndex <= 7 ? "high (6-7)" : (uvIndex <= 10 ? "very high (8-10)" : "extreme (11+)")));
             envUv.setAttribute('data-js-tooltip', `UV Index: ${uvIndex}<br><span class='text-[10px] text-g-grey'>Level: ${uvLevel}</span>`);
@@ -210,82 +223,116 @@ export async function fetchRealAirData(lat, lon) {
         const headerSync = document.getElementById('header-sync');
         if (headerSync) {
             const dateOpts = { month: 'short', day: 'numeric', year: 'numeric' };
-            const timeOpts = { hour12: false, hour: '2-digit', minute: '2-digit' }; // Removed seconds for cleaner UI
+            const timeOpts = { hour12: false, hour: '2-digit', minute: '2-digit' }; 
             const dateStr = localSyncTime.toLocaleDateString('en-US', dateOpts);
             const timeStr = localSyncTime.toLocaleTimeString('en-US', timeOpts);
             
-            // Removed "(Sync: ...)" from the inner text formatting to avoid duplication
             headerSync.innerText = `${dateStr} ${timeStr}`;
         }
     }
     
-    // 3. Weather Forecast (24 Hours)
-    const mockWfData = { list: Array.from({length: 8}).map((_, i) => ({ dt: Math.floor(Date.now()/1000) + i*10800, main: { temp: 28 + Math.cos(i)*3 }, weather: [{main: 'Clouds', description: 'clouds', icon: '03d'}] })) };
+    // 3. Weather Forecast (24 Hours & 5 Days Integration)
+    const mockWfData = { list: Array.from({length: 40}).map((_, i) => ({ dt: Math.floor(Date.now()/1000) + i*10800, main: { temp: 28 + Math.cos(i)*3 }, weather: [{main: 'Clouds', description: 'clouds', icon: '03d'}] })) };
     const weatherForecastUrl = `https://api.openweathermap.org/data/2.5/forecast?lat=${lat}&lon=${lon}&appid=${state.API_KEY}&units=metric&lang=en`;
     const wfData = await safeFetch(weatherForecastUrl, mockWfData);
 
     if (wfData && wfData.list) {
-        const forecastContainer = document.getElementById('weather-forecast-container');
-        if (forecastContainer) {
-            // Create a global tooltip element attached to the body to escape scrolling container clipping
-            let tooltipEl = document.getElementById('global-forecast-tooltip');
-            if (!tooltipEl) {
-                tooltipEl = document.createElement('div');
-                tooltipEl.id = 'global-forecast-tooltip';
-                tooltipEl.className = 'fixed hidden bg-g-black text-g-grey-light text-[11px] font-medium py-1.5 px-2.5 rounded shadow-xl z-[9999] pointer-events-none transform -translate-x-1/2 -translate-y-full';
-                document.body.appendChild(tooltipEl);
+        // Feed the precise 24-hour array natively
+        state.weatherForecastData24h = wfData.list.slice(0, 8);
+        
+        // Group by local day for 5-day forecast extraction
+        const dailyData = {};
+        wfData.list.forEach(item => {
+            let localTime = new Date(item.dt * 1000);
+            if (state.isTimezoneSet) {
+                const utcTime = localTime.getTime() + (localTime.getTimezoneOffset() * 60000);
+                localTime = new Date(utcTime + (state.currentTimezoneOffset * 1000));
             }
-
-            let forecastHTML = '';
-            const next24h = wfData.list.slice(0, 8);
-
-            next24h.forEach(item => {
-                let localTime = new Date(item.dt * 1000);
-                if (state.isTimezoneSet) {
-                    const utcTime = localTime.getTime() + (localTime.getTimezoneOffset() * 60000);
-                    localTime = new Date(utcTime + (state.currentTimezoneOffset * 1000));
-                }
-                const timeStr = localTime.toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit' });
-
-                const fIconCode = item.weather[0].icon;
-                const fIconUrl = `https://openweathermap.org/img/wn/${fIconCode}@2x.png`;
-                const weatherDesc = item.weather[0].description;
-                const formattedDesc = weatherDesc.charAt(0).toUpperCase() + weatherDesc.slice(1);
-
-                forecastHTML += `
-                    <div data-weather-desc="${formattedDesc}" class="flex flex-col items-center min-w-[70px] bg-[#F8F9FA] rounded-lg p-2 border border-g-grey-light shrink-0 cursor-help hover:bg-white transition-colors">
-                        <span class="text-[10px] text-g-grey-dark pointer-events-none">${timeStr}</span>
-                        <img src="${fIconUrl}" alt="${weatherDesc}" class="w-10 h-10 object-contain drop-shadow-[0_3px_5px_rgba(0,0,0,0.35)] my-0.5 pointer-events-none" />
-                        <span class="text-xs font-bold text-g-black pointer-events-none">${Math.round(item.main.temp)}°</span>
-                    </div>
-                `;
-            });
+            const dateStr = localTime.toLocaleDateString('en-US'); 
             
-            forecastContainer.innerHTML = forecastHTML;
+            if (!dailyData[dateStr]) {
+                dailyData[dateStr] = { items: [], date: localTime };
+            }
+            dailyData[dateStr].items.push(item);
+        });
 
-            // Use event delegation to show the tooltip floating above the cursor
-            forecastContainer.onmousemove = (e) => {
-                const target = e.target.closest('[data-weather-desc]');
-                if (target) {
-                    tooltipEl.innerText = target.getAttribute('data-weather-desc');
-                    tooltipEl.style.left = e.clientX + 'px';
-                    tooltipEl.style.top = (e.clientY - 15) + 'px'; // Position 15px above the mouse
-                    tooltipEl.classList.remove('hidden');
-                } else {
-                    tooltipEl.classList.add('hidden');
-                }
-            };
+        state.weatherForecastData5d = Object.values(dailyData).slice(0, 5).map(day => {
+            const maxTempItem = day.items.reduce((max, item) => item.main.temp > max.main.temp ? item : max, day.items[0]);
+            const minTempItem = day.items.reduce((min, item) => item.main.temp < min.main.temp ? item : min, day.items[0]);
             
-            forecastContainer.onmouseleave = () => {
-                tooltipEl.classList.add('hidden');
+            return {
+                dt: maxTempItem.dt, 
+                temp: { max: maxTempItem.main.temp, min: minTempItem.main.temp },
+                weather: maxTempItem.weather,
+                dateObj: day.date,
+                rawItems: day.items // Retain the 3-hour chunks to power the drill-down view
             };
-        }
+        });
+
+        // Triggers UI repaint with newly compiled arrays
+        renderWeatherForecast();
     }
 
-    // 4. Air Pollution Forecast (Sparkline)
+    // 4. Air Pollution Forecast (Sparkline) - Upgraded to 5D Support
     const fcastAqUrl = `https://api.openweathermap.org/data/2.5/air_pollution/forecast?lat=${lat}&lon=${lon}&appid=${state.API_KEY}`;
-    const fcastAq = await safeFetch(fcastAqUrl, { list: Array(24).fill({components:{pm2_5: Math.random()*50+10}}) });
-    if(fcastAq.list) drawSparkline(fcastAq.list.slice(0, 24));
+    const mockAqData = { 
+        list: Array.from({length: 120}).map((_, i) => ({ 
+            dt: Math.floor(Date.now() / 1000) + (i * 3600), 
+            components: { 
+                pm2_5: 12 + Math.sin(i/4) * 10 + Math.random() * 5,
+                pm10: 25 + Math.sin(i/4) * 15 + Math.random() * 8,
+                co: 400 + Math.sin(i/4) * 200 + Math.random() * 50,
+                no2: 20 + Math.sin(i/4) * 10 + Math.random() * 4,
+                o3: 45 + Math.sin(i/4) * 25 + Math.random() * 10,
+                so2: 15 + Math.sin(i/4) * 8 + Math.random() * 3
+            } 
+        })) 
+    };
+    
+    const fcastAq = await safeFetch(fcastAqUrl, mockAqData);
+    if(fcastAq && fcastAq.list) {
+        state.pm25ForecastData24h = fcastAq.list.slice(0, 24);
+        
+        // Group by local day for 5-day forecast extraction (Daily Max per pollutant)
+        const dailyAqData = {};
+        fcastAq.list.forEach(item => {
+            let localTime = new Date((item.dt || 0) * 1000);
+            if (state.isTimezoneSet) {
+                const utcTime = localTime.getTime() + (localTime.getTimezoneOffset() * 60000);
+                localTime = new Date(utcTime + (state.currentTimezoneOffset * 1000));
+            }
+            const dateStr = localTime.toLocaleDateString('en-US'); 
+            
+            if (!dailyAqData[dateStr]) {
+                dailyAqData[dateStr] = { items: [], date: localTime };
+            }
+            dailyAqData[dateStr].items.push(item);
+        });
+
+        state.pm25ForecastData5d = Object.values(dailyAqData).slice(0, 5).map(day => {
+            // Find the maximum value for each individual pollutant across the day's readings
+            const maxComponents = { pm2_5: 0, pm10: 0, co: 0, no2: 0, o3: 0, so2: 0 };
+            day.items.forEach(item => {
+                if (item.components) {
+                    Object.keys(maxComponents).forEach(key => {
+                        maxComponents[key] = Math.max(maxComponents[key], item.components[key] || 0);
+                    });
+                }
+            });
+
+            return {
+                dt: day.items[0].dt, 
+                components: maxComponents,
+                dateObj: day.date
+            };
+        });
+
+        if (typeof renderPM25Sparkline === 'function') {
+            renderPM25Sparkline();
+        } else {
+            drawSparkline(state.pm25ForecastData24h);
+        }
+    }
 }
 
 export async function analyzeAirWithGemini() {
@@ -300,36 +347,132 @@ export async function analyzeAirWithGemini() {
     const locNameEl = document.getElementById('location-name');
     const locationText = locNameEl ? locNameEl.innerText : 'Unknown Location';
     const intlAqi = data.main.aqi;
+    const comps = data.components;
     
+    // Extract current UI values dynamically to align AI awareness with User View
+    const envWind = document.getElementById('env-wind')?.innerText || 'N/A';
+    const envHumidity = document.getElementById('env-humidity')?.innerText || 'N/A';
+    const envUv = document.getElementById('env-uv')?.innerText || 'N/A';
+    
+    let envTemp = 'N/A';
+    const headerWeatherEl = document.getElementById('header-weather');
+    if (headerWeatherEl) {
+        // Simple regex to extract just the temp text (e.g., "28°C | CLOUDS")
+        envTemp = headerWeatherEl.innerText.trim();
+    }
+
+    // Generate succinct 24H Weather Summary
+    let forecastWeatherSummary = "Not available.";
+    if (state.weatherForecastData24h && state.weatherForecastData24h.length > 0) {
+        const temps = state.weatherForecastData24h.map(item => item.main.temp);
+        const maxTemp = Math.max(...temps).toFixed(1);
+        const minTemp = Math.min(...temps).toFixed(1);
+        const conditions = [...new Set(state.weatherForecastData24h.map(item => item.weather[0].description))].join(', ');
+        forecastWeatherSummary = `Temperatures ranging from ${minTemp}°C to ${maxTemp}°C. Expected conditions: ${conditions}.`;
+    }
+
+    // Generate succinct 24H PM2.5 Forecast Summary
+    let forecastPm25Summary = "Not available.";
+    if (state.pm25ForecastData24h && state.pm25ForecastData24h.length > 0) {
+        const pm25s = state.pm25ForecastData24h.map(item => item.components.pm2_5);
+        const maxPm25 = Math.max(...pm25s).toFixed(1);
+        const minPm25 = Math.min(...pm25s).toFixed(1);
+        forecastPm25Summary = `PM2.5 levels will fluctuate between ${minPm25} and ${maxPm25} µg/m³ over the next 24 hours.`;
+    }
+    
+    // Define the strict structured output schema based on the Gemini REST documentation
+    const schema = {
+        type: "OBJECT",
+        properties: {
+            digest: {
+                type: "STRING",
+                description: "A 2-sentence clinical summary of the current and upcoming atmospheric safety."
+            },
+            personalizedAdvice: {
+                type: "STRING",
+                description: "Provide 2 or 3 highly specific, practical sentences of advice customized directly for the selected profile."
+            },
+            safeWindow: {
+                type: "STRING",
+                description: "Identify the safest 2-3 hour window for outdoor activities in the next 24 hours based on the trends."
+            },
+            actionChecklist: {
+                type: "ARRAY",
+                items: { type: "STRING" },
+                description: "Array of 1-3 short, specific actions (e.g., 'Wear an N95 mask', 'Turn on HEPA purifier')"
+            },
+            pollutantContext: {
+                type: "STRING",
+                description: "Identify the worst pollutant right now and explain in 1 sentence what might be causing it based on the wind/weather."
+            }
+        },
+        required: ["digest", "personalizedAdvice", "safeWindow", "actionChecklist", "pollutantContext"]
+    };
+
     const promptData = `
         Acting as an AI Clinician Advisory system for an Air Hygiene Hub. 
-        Analyze the air quality for: ${locationText}. Weather: ${state.currentWeather}. International AQI: ${intlAqi} (Scale 1-5). PM2.5: ${data.components.pm2_5} µg/m³. CO: ${data.components.co} µg/m³. 
+        Analyze the environmental data for: ${locationText}.
+        
+        [CURRENT CONDITIONS]
+        Weather: ${envTemp}, Wind: ${envWind}, Humidity: ${envHumidity}, UV Index: ${envUv}
+        Overall AQI (1-5 scale): ${intlAqi}
+        Current Pollutants (µg/m³): PM2.5: ${comps.pm2_5}, PM10: ${comps.pm10}, CO: ${comps.co}, NO2: ${comps.no2}, O3: ${comps.o3}, SO2: ${comps.so2}.
+        
+        [24-HOUR OUTLOOK]
+        Weather Trend: ${forecastWeatherSummary}
+        PM2.5 Trend: ${forecastPm25Summary}
+        
         The user has requested personalized advice specifically tailored for this demographic/profile: ${state.userProfile}.
         
-        Return ONLY a valid JSON string (do not use markdown formatting like \`\`\`json) with the following strictly named keys:
-        {
-          "digest": "A 2-sentence clinical summary of the atmosphere safety.",
-          "personalizedAdvice": "Provide 2 or 3 highly specific, practical sentences of advice customized directly for the selected profile (${state.userProfile}) based on the current weather and pollutant data."
-        }
+        Based on ALL provided current and forecasted data, generate a clinical safety digest and tailored advice.
     `;
 
     try {
         if (!state.GEMINI_API_KEY || state.GEMINI_API_KEY === '') throw new Error("Missing Gemini Key");
 
         const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent?key=${state.GEMINI_API_KEY}`;
+        
+        const requestBody = {
+            contents: [{ parts: [{ text: promptData }] }],
+            generationConfig: {
+                responseMimeType: "application/json",
+                responseSchema: schema
+            }
+        };
+
         const response = await fetch(url, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ contents: [{ parts: [{ text: promptData }] }] })
+            body: JSON.stringify(requestBody)
         });
         
-        if (!response.ok) throw new Error("API Error");
-        const result = await response.json();
+        let result;
+        try {
+            result = await response.json();
+        } catch (e) {
+            throw new Error(`[${response.status}] ${response.statusText}`);
+        }
+        
+        if (!response.ok) {
+            const errorMsg = result.error?.message || response.statusText || "API Error";
+            throw new Error(`[${response.status}] ${errorMsg}`);
+        }
+
         let jsonStr = result.candidates?.[0]?.content?.parts?.[0]?.text || "{}";
         jsonStr = jsonStr.replace(/```json/g, '').replace(/```/g, '').trim();
         const aiData = JSON.parse(jsonStr);
 
-        document.getElementById('ai-digest').innerText = aiData.digest || 'Data processing error.';
+        // Safely insert API status banner above the selector (only if non-200)
+        if (response.status !== 200) {
+            updateAiApiStatus(response.status, false);
+        } else {
+            updateAiApiStatus(null, false);
+        }
+
+        const digestEl = document.getElementById('ai-digest');
+        if (digestEl) {
+            digestEl.innerHTML = aiData.digest || 'Data processing error.';
+        }
 
         const personalizedBlock = document.getElementById('personalized-block');
         const personalizedText = document.getElementById('ai-personalized');
@@ -339,7 +482,25 @@ export async function analyzeAirWithGemini() {
             if (state.userProfile !== 'General') {
                 personalizedBlock.classList.remove('hidden');
                 personalizedTitle.innerText = `Guidance for ${state.userProfile}`;
-                personalizedText.innerText = aiData.personalizedAdvice || 'No targeted advice available at this time.';
+                
+                // Format the rich HTML output for the new AI parameters
+                let adviceHTML = `<p class="mb-2 leading-relaxed text-white font-medium">${aiData.personalizedAdvice || 'No targeted advice available at this time.'}</p>`;
+                
+                if (aiData.pollutantContext) {
+                    adviceHTML += `<p class="mb-2 opacity-90"><strong class="text-g-blue-light">Primary Pollutant:</strong> ${aiData.pollutantContext}</p>`;
+                }
+                if (aiData.safeWindow) {
+                    adviceHTML += `<p class="mb-2 opacity-90"><strong class="text-g-green-light">Optimal Time Window:</strong> ${aiData.safeWindow}</p>`;
+                }
+                if (aiData.actionChecklist && aiData.actionChecklist.length > 0) {
+                    adviceHTML += `<p class="text-g-blue-light font-bold mt-3 mb-1">Recommended Actions:</p><ul class="list-disc pl-4 space-y-1 opacity-90 text-[9.5px]">`;
+                    aiData.actionChecklist.forEach(action => {
+                        adviceHTML += `<li>${action}</li>`;
+                    });
+                    adviceHTML += `</ul>`;
+                }
+                
+                personalizedText.innerHTML = adviceHTML;
             } else {
                 personalizedBlock.classList.add('hidden');
             }
@@ -348,12 +509,19 @@ export async function analyzeAirWithGemini() {
         if (loading) loading.classList.add('hidden');
         if (contentBlock) contentBlock.classList.remove('hidden');
         
+        // Notify the application that AI content has been successfully updated
+        window.dispatchEvent(new Event('ai-updated'));
+        
     } catch (error) {
         if (loading) loading.classList.add('hidden');
         if (contentBlock) contentBlock.classList.remove('hidden');
         
+        updateAiApiStatus(error.message, true);
+
         const digestEl = document.getElementById('ai-digest');
-        if (digestEl) digestEl.innerText = 'AI Advisory is currently operating in manual observation mode. (Demo Mode)';
+        if (digestEl) {
+            digestEl.innerHTML = `AI Advisory is currently operating in manual observation mode. (Demo Mode)`;
+        }
 
         const personalizedBlock = document.getElementById('personalized-block');
         const personalizedText = document.getElementById('ai-personalized');
@@ -368,6 +536,9 @@ export async function analyzeAirWithGemini() {
                 personalizedBlock.classList.add('hidden');
             }
         }
+        
+        // Notify the application even on simulated/failed updates
+        window.dispatchEvent(new Event('ai-updated'));
     }
 }
 
@@ -409,7 +580,6 @@ export async function searchLocation(query, syncCallback) {
     }
 
     try {
-        // Replaced Nominatim with OpenWeatherMap Geocoding API to bypass localhost/CORS blocking
         const url = `https://api.openweathermap.org/geo/1.0/direct?q=${encodeURIComponent(query)}&limit=1&appid=${state.API_KEY}`;
         const response = await fetch(url);
         if (!response.ok) throw new Error("Search Request Failed");

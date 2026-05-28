@@ -24,7 +24,7 @@ export function updateUI(data) {
     const aqiLabel = document.getElementById('aqi-label');
     if (aqiLabel) {
         aqiLabel.innerText = aqiInfo.label;
-        aqiLabel.className = `text-sm font-bold ${aqiInfo.text} mt-2 bg-white px-3 py-0.5 rounded-full border ${aqiInfo.border}`;
+        aqiLabel.className = `text-xs font-bold ${aqiInfo.text} mt-3 bg-white px-4 py-1 rounded-full border ${aqiInfo.border} shadow-sm`;
     }
 
     const aqiDetailsContainer = document.getElementById('aqi-details-container');
@@ -32,20 +32,20 @@ export function updateUI(data) {
     const aqiAdviceText = document.getElementById('aqi-advice-text');
     
     if (aqiDetailsContainer && aqiDescription && aqiAdviceText) {
-        aqiDescription.innerText = aqiInfo.desc;
-        aqiAdviceText.innerText = aqiInfo.advice;
+        aqiDescription.innerText = aqiInfo.desc || '';
+        aqiAdviceText.innerText = aqiInfo.advice || '';
         aqiDetailsContainer.classList.remove('opacity-0');
     }
     
-    // Pollutants mapped to Google Colors
+    // Pollutants mapped to Guidelines
     const guidelines = { pm2_5: 15, pm10: 45, co: 4000, no2: 25, o3: 100, so2: 40 };
     const origins = {
-        pm2_5: "Vehicle combustion, dust, wildfire smoke.",
-        pm10: "Road grit, construction sites, pollen spores.",
-        co: "Incomplete combustion, motor vehicles.",
-        no2: "Diesel engines, thermal power plants.",
-        o3: "Atmospheric chemical reactions, sunlight, smog.",
-        so2: "Refineries, volcanic activity, burning coal."
+        pm2_5: "Vehicle combustion.",
+        pm10: "Road grit, construction.",
+        co: "Incomplete combustion.",
+        no2: "Diesel engines.",
+        o3: "Sunlight, smog.",
+        so2: "Refineries, coal."
     };
     
     Object.keys(guidelines).forEach(key => {
@@ -57,51 +57,77 @@ export function updateUI(data) {
         const rawPct = (val / limit) * 100;
         const visualPct = Math.min(rawPct, 100); 
         
-        if(document.getElementById(`val-${domId}`)) document.getElementById(`val-${domId}`).innerText = val.toFixed(1);
+        const valEl = document.getElementById(`val-${domId}`);
+        if(valEl) {
+            let unitStr = 'µg/m³';
+            valEl.innerHTML = `${val.toFixed(1)}<span class="text-[10px] text-g-grey font-normal ml-0.5">${unitStr}</span>`;
+        }
         
         const bar = document.getElementById(`bar-${domId}`);
         if(bar) {
             bar.style.width = `${visualPct}%`; // Cap at 100% so it doesn't break the UI container
-            // bg-g-green-medium, bg-g-yellow, bg-g-red-medium
-            bar.className = `h-full rounded-full transition-all duration-700 ${rawPct > 100 ? 'bg-g-red-medium' : (rawPct > 75 ? 'bg-g-yellow' : 'bg-g-green-medium')}`;
             
-            // Dynamically append or update the Origin box inside the card
+            let barColor = 'bg-g-green-medium';
+            if (rawPct >= 300) barColor = 'bg-g-red';
+            else if (rawPct >= 200) barColor = 'bg-g-red-medium';
+            else if (rawPct > 100) barColor = 'bg-g-orange';
+            else if (rawPct > 50) barColor = 'bg-g-yellow';
+            
+            bar.className = `h-full rounded-full transition-all duration-700 ${barColor}`;
+            
+            // Dynamically append or update the Origin text below the bar
             const card = bar.parentElement.parentElement;
             if (card) {
                 let originEl = document.getElementById(`origin-${domId}`);
                 if (!originEl) {
                     originEl = document.createElement('div');
                     originEl.id = `origin-${domId}`;
-                    originEl.className = 'bg-[#F8F9FA] border border-g-grey-light rounded-lg p-3 text-[10px] text-g-grey-dark';
+                    originEl.className = 'text-[9px] text-g-grey-dark mt-1.5';
                     card.appendChild(originEl);
                 }
-                originEl.innerHTML = `<span class="font-semibold text-g-black">Origin:</span> ${origins[key]}`;
+                originEl.innerHTML = `<span class="font-bold text-g-black">Source:</span> ${origins[key]}`;
             }
         }
         
         const pctEl = document.getElementById(`pct-${domId}`);
         if (pctEl) {
-            pctEl.innerText = `${Math.round(rawPct)}% Limit`;
-            if (rawPct > 100) {
+            // Update the limit text to format nicely with units
+            const limitTextEl = pctEl.previousElementSibling;
+            if (limitTextEl) {
+                limitTextEl.innerHTML = `Limit: ${limit}µg/m³`;
+            }
+            
+            pctEl.innerText = `${Math.round(rawPct)}%`;
+            if (rawPct >= 300) {
+                pctEl.className = 'text-g-red font-bold';
+            } else if (rawPct >= 200) {
                 pctEl.className = 'text-g-red-medium font-bold';
-            } else if (rawPct > 75) {
+            } else if (rawPct > 100) {
                 pctEl.className = 'text-g-orange font-bold';
+            } else if (rawPct > 50) {
+                pctEl.className = 'text-g-yellow font-bold';
             } else {
-                pctEl.className = 'text-g-grey font-medium';
+                pctEl.className = 'text-g-grey-dark font-medium';
             }
         }
         
         const badge = document.getElementById(`badge-${domId}`);
         if(badge) {
-            if (rawPct > 100) {
+            if (rawPct >= 300) {
+                badge.innerText = 'HAZARDOUS';
+                badge.className = 'text-[9px] font-bold px-1.5 py-0.5 rounded border text-g-red border-g-red/30 bg-g-red-light/80 tracking-wide';
+            } else if (rawPct >= 200) {
+                badge.innerText = 'POOR';
+                badge.className = 'text-[9px] font-bold px-1.5 py-0.5 rounded border text-g-red-medium border-g-red-medium/30 bg-g-red-light/30 tracking-wide';
+            } else if (rawPct > 100) {
                 badge.innerText = 'UNHEALTHY';
-                badge.className = 'text-[10px] font-bold px-2 py-0.5 rounded border text-g-red-medium border-g-red-medium/30 bg-g-red-light/30';
-            } else if (rawPct > 75) {
-                badge.innerText = 'ELEVATED';
-                badge.className = 'text-[10px] font-bold px-2 py-0.5 rounded border text-g-orange border-g-yellow/50 bg-g-yellow-light/30';
+                badge.className = 'text-[9px] font-bold px-1.5 py-0.5 rounded border text-g-orange border-g-orange/30 bg-g-orange/10 tracking-wide';
+            } else if (rawPct > 50) {
+                badge.innerText = 'MODERATE';
+                badge.className = 'text-[9px] font-bold px-1.5 py-0.5 rounded border text-g-yellow border-g-yellow/50 bg-g-yellow-light/30 tracking-wide';
             } else {
-                badge.innerText = 'WITHIN LIMIT';
-                badge.className = 'text-[10px] font-bold px-2 py-0.5 rounded border text-g-green-medium border-g-green-medium/30 bg-g-green-light/30';
+                badge.innerText = 'GOOD';
+                badge.className = 'text-[9px] font-bold px-1.5 py-0.5 rounded border text-g-green-medium border-g-green-medium/30 bg-g-green-light/30 tracking-wide';
             }
         }
     });
@@ -113,9 +139,18 @@ export function updateUI(data) {
     if (geoLon) geoLon.innerText = state.currentLon.toFixed(4);
 }
 
-export function drawSparkline(forecastList) {
+export function renderPM25Sparkline() {
+    const listToRender = state.pm25ForecastMode === '5d' ? state.pm25ForecastData5d : state.pm25ForecastData24h;
+    drawSparkline(listToRender, state.pm25ForecastMode);
+}
+
+export function drawSparkline(forecastList, mode = '24h') {
     const canvas = document.getElementById('pm25-sparkline');
     if(!canvas) return;
+
+    const pollutant = state.selectedPollutant || 'pm2_5';
+    const guidelines = { pm2_5: 15, pm10: 45, co: 4000, no2: 25, o3: 100, so2: 40 };
+    const limit = guidelines[pollutant] || 15;
 
     // Create the tooltip element if it doesn't exist
     let tooltipEl = document.getElementById('chart-tooltip');
@@ -126,7 +161,7 @@ export function drawSparkline(forecastList) {
         document.body.appendChild(tooltipEl);
     }
 
-    const dataPoints = forecastList.map(item => item.components.pm2_5);
+    const dataPoints = forecastList.map(item => item.components[pollutant] || 0);
 
     // Clean up old event listeners to prevent duplicate triggers
     if (canvas._hoverListener) {
@@ -160,10 +195,17 @@ export function drawSparkline(forecastList) {
                 const utcTime = localTime.getTime() + (localTime.getTimezoneOffset() * 60000);
                 localTime = new Date(utcTime + (state.currentTimezoneOffset * 1000));
             }
-            const timeStr = localTime.toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit' });
             
-            // Color the tooltip text based on the 15µg/m³ WHO guideline
-            const rawPct = (val / 15) * 100;
+            let timeStr = '';
+            if (mode === '5d') {
+                const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+                timeStr = days[localTime.getDay()];
+            } else {
+                timeStr = localTime.toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit' });
+            }
+            
+            // Color the tooltip text based on the WHO guideline
+            const rawPct = (val / limit) * 100;
             let valColor = 'text-g-green-medium';
             if (rawPct > 100) {
                 valColor = 'text-g-red-medium';
@@ -171,8 +213,10 @@ export function drawSparkline(forecastList) {
                 valColor = 'text-g-yellow';
             }
             
+            let unitStr = pollutant === 'co' ? 'µg/m³' : 'µg/m³';
+
             tooltipEl.innerHTML = `
-                <div class="font-bold ${valColor}">${val.toFixed(1)} <span class="text-[9px] font-normal text-g-grey">µg/m³</span></div>
+                <div class="font-bold ${valColor}">${val.toFixed(1)} <span class="text-[9px] font-normal text-g-grey">${unitStr}</span></div>
                 <div class="text-[10px] text-g-grey mt-0.5">${timeStr}</div>
             `;
             
@@ -180,26 +224,26 @@ export function drawSparkline(forecastList) {
             tooltipEl.style.top = `${e.clientY - 15}px`;
             tooltipEl.classList.remove('hidden');
             
-            renderSparklineCanvas(forecastList, index);
+            renderSparklineCanvas(forecastList, index, mode, pollutant, limit);
         } else {
             tooltipEl.classList.add('hidden');
-            renderSparklineCanvas(forecastList, -1);
+            renderSparklineCanvas(forecastList, -1, mode, pollutant, limit);
         }
     };
 
     canvas._leaveListener = () => {
         tooltipEl.classList.add('hidden');
-        renderSparklineCanvas(forecastList, -1);
+        renderSparklineCanvas(forecastList, -1, mode, pollutant, limit);
     };
 
     canvas.addEventListener('mousemove', canvas._hoverListener);
     canvas.addEventListener('mouseleave', canvas._leaveListener);
 
     // Initial render without hover
-    renderSparklineCanvas(forecastList, -1);
+    renderSparklineCanvas(forecastList, -1, mode, pollutant, limit);
 }
 
-function renderSparklineCanvas(forecastList, hoverIndex) {
+function renderSparklineCanvas(forecastList, hoverIndex, mode = '24h', pollutant = 'pm2_5', limit = 15) {
     const canvas = document.getElementById('pm25-sparkline');
     const dpr = window.devicePixelRatio || 1;
     const rect = canvas.getBoundingClientRect();
@@ -217,8 +261,8 @@ function renderSparklineCanvas(forecastList, hoverIndex) {
 
     ctx.clearRect(0, 0, width, height);
 
-    const dataPoints = forecastList.map(item => item.components.pm2_5);
-    const max = Math.max(...dataPoints, 50); 
+    const dataPoints = forecastList.map(item => item.components[pollutant] || 0);
+    const max = Math.max(...dataPoints, limit * 1.5); 
     const min = 0;
     
     // Internal Padding 
@@ -244,92 +288,238 @@ function renderSparklineCanvas(forecastList, hoverIndex) {
     ctx.fillText(Math.round(max), pLeft - (4 * dpr), pTop);
     ctx.fillText(0, pLeft - (4 * dpr), pTop + drawH);
 
-    // Draw X-Axis Time Labels (Every 6 hours)
+    // Draw X-Axis Time Labels
     ctx.textAlign = "center";
     ctx.textBaseline = "top";
-    for (let i = 0; i < forecastList.length; i += 6) { 
-        const x = getX(i);
-        let localTime = new Date(forecastList[i].dt * 1000);
+    
+    if (mode === '5d') {
+        for (let i = 0; i < forecastList.length; i++) { 
+            const x = getX(i);
+            let localTime = new Date(forecastList[i].dt * 1000);
+            if (state.isTimezoneSet) {
+                const utcTime = localTime.getTime() + (localTime.getTimezoneOffset() * 60000);
+                localTime = new Date(utcTime + (state.currentTimezoneOffset * 1000));
+            }
+            const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+            ctx.fillText(days[localTime.getDay()], x, pTop + drawH + (4 * dpr));
+        }
+    } else {
+        // Every 6 hours logic for 24H view
+        for (let i = 0; i < forecastList.length; i += 6) { 
+            const x = getX(i);
+            let localTime = new Date(forecastList[i].dt * 1000);
+            if (state.isTimezoneSet) {
+                const utcTime = localTime.getTime() + (localTime.getTimezoneOffset() * 60000);
+                localTime = new Date(utcTime + (state.currentTimezoneOffset * 1000));
+            }
+            const timeStr = localTime.toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit' });
+            ctx.fillText(timeStr, x, pTop + drawH + (4 * dpr));
+        }
+    }
+
+    if (mode === '5d') {
+        // --- Dynamic Threshold Line Chart ---
+        
+        let gradient = '#34A853'; // Default green fallback
+        if (max > min) {
+            gradient = ctx.createLinearGradient(0, pTop, 0, pTop + drawH);
+            // Calculate percentage positions for WHO thresholds relative to chart scale
+            const stopRed = Math.max(0, Math.min(1, 1 - ((limit - min) / (max - min))));
+            const stopYellow = Math.max(0, Math.min(1, 1 - (((limit * 0.75) - min) / (max - min))));
+            
+            // Map the colors directly to the threshold lines
+            gradient.addColorStop(0, '#EA4335');
+            gradient.addColorStop(stopRed, '#EA4335');
+            gradient.addColorStop(stopRed, '#FBBC04');
+            gradient.addColorStop(stopYellow, '#FBBC04');
+            gradient.addColorStop(stopYellow, '#34A853');
+            gradient.addColorStop(1, '#34A853');
+        }
+
+        // Draw the connected Line
+        ctx.beginPath();
+        ctx.moveTo(getX(0), getY(dataPoints[0]));
+        for (let i = 1; i < dataPoints.length; i++) {
+            ctx.lineTo(getX(i), getY(dataPoints[i]));
+        }
+        ctx.lineWidth = 3 * dpr;
+        ctx.strokeStyle = gradient;
+        ctx.lineJoin = 'round';
+        ctx.lineCap = 'round';
+        ctx.stroke();
+
+        // Draw individual data points on top of the line
+        for (let i = 0; i < dataPoints.length; i++) {
+            const val = dataPoints[i];
+            const rawPct = (val / limit) * 100;
+            
+            let ptColor = '#34A853'; // Green
+            let hoverPtColor = '#0D652D'; 
+            
+            if (rawPct > 100) { 
+                ptColor = '#EA4335'; // Red
+                hoverPtColor = '#A50E0E'; 
+            } else if (rawPct > 75) { 
+                ptColor = '#FBBC04'; // Yellow
+                hoverPtColor = '#E37400'; 
+            }
+
+            const isHovered = (i === hoverIndex);
+            
+            ctx.beginPath();
+            ctx.arc(getX(i), getY(val), (isHovered ? 6 : 4) * dpr, 0, 2 * Math.PI);
+            ctx.fillStyle = isHovered ? hoverPtColor : ptColor;
+            ctx.fill();
+            
+            // White border to make points stand out from the line
+            ctx.strokeStyle = '#FFFFFF';
+            ctx.lineWidth = 2 * dpr;
+            ctx.stroke();
+        }
+
+    } else {
+        // --- Standard Bar Chart (24H view) ---
+        const barWidth = Math.max(step * 0.7, 2 * dpr); 
+        
+        for (let i = 0; i < dataPoints.length; i++) {
+            const val = dataPoints[i];
+            const hx = getX(i);
+            const hy = getY(val);
+            const barH = (pTop + drawH) - hy;
+
+            // Apply Warning colors based on WHO guidelines
+            const rawPct = (val / limit) * 100;
+            if (rawPct >= 300) {
+                ctx.fillStyle = (i === hoverIndex) ? '#A50E0E' : '#EA4335'; // Hover: g-red-dark, Default: g-red-medium
+            } else if (rawPct >= 200) {
+                ctx.fillStyle = (i === hoverIndex) ? '#A50E0E' : '#EA4335';
+            } else if (rawPct > 100) {
+                ctx.fillStyle = (i === hoverIndex) ? '#E37400' : '#FBBC04'; // Hover: g-orange, Default: g-yellow
+            } else if (rawPct > 50) {
+                ctx.fillStyle = (i === hoverIndex) ? '#E37400' : '#FBBC04';
+            } else {
+                ctx.fillStyle = (i === hoverIndex) ? '#0D652D' : '#34A853'; // Hover: g-green-dark, Default: g-green-medium
+            }
+
+            ctx.beginPath();
+            if (ctx.roundRect) {
+                ctx.roundRect(hx - barWidth / 2, hy, barWidth, Math.max(barH, 1 * dpr), [2 * dpr, 2 * dpr, 0, 0]);
+            } else {
+                ctx.rect(hx - barWidth / 2, hy, barWidth, Math.max(barH, 1 * dpr));
+            }
+            ctx.fill();
+        }
+    }
+}
+
+export function renderWeatherForecast() {
+    const forecastContainer = document.getElementById('weather-forecast-container');
+    if (!forecastContainer) return;
+
+    let tooltipEl = document.getElementById('global-forecast-tooltip');
+    if (!tooltipEl) {
+        tooltipEl = document.createElement('div');
+        tooltipEl.id = 'global-forecast-tooltip';
+        tooltipEl.className = 'fixed hidden bg-g-black text-g-grey-light text-[11px] font-medium py-1.5 px-2.5 rounded shadow-xl z-[9999] pointer-events-none transform -translate-x-1/2 -translate-y-full';
+        document.body.appendChild(tooltipEl);
+    }
+
+    let forecastHTML = '';
+    let listToRender = [];
+    
+    // Navigation Elements
+    const titleEl = document.getElementById('forecast-title');
+    const backBtn = document.getElementById('btn-forecast-back');
+    const toggles = document.getElementById('forecast-toggles');
+
+    if (state.forecastMode === '5d') {
+        if (state.selectedDayIndex !== undefined && state.selectedDayIndex !== null) {
+            // Drill-down mode: Show 3-hour chunks for the selected day
+            listToRender = state.weatherForecastData5d[state.selectedDayIndex].rawItems;
+            if (titleEl) {
+                const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+                titleEl.innerText = `${days[state.weatherForecastData5d[state.selectedDayIndex].dateObj.getDay()]} Forecast`;
+            }
+            if (backBtn) backBtn.classList.remove('hidden');
+            if (toggles) toggles.classList.add('hidden');
+        } else {
+            // Standard 5D overview
+            listToRender = state.weatherForecastData5d;
+            if (titleEl) titleEl.innerText = 'Weather Forecast';
+            if (backBtn) backBtn.classList.add('hidden');
+            if (toggles) toggles.classList.remove('hidden');
+        }
+    } else {
+        // Standard 24H view
+        listToRender = state.weatherForecastData24h;
+        if (titleEl) titleEl.innerText = 'Weather Forecast';
+        if (backBtn) backBtn.classList.add('hidden');
+        if (toggles) toggles.classList.remove('hidden');
+    }
+
+    if (!listToRender || listToRender.length === 0) return;
+
+    listToRender.forEach((item, index) => {
+        let localTime = new Date((item.dt || 0) * 1000);
         if (state.isTimezoneSet) {
             const utcTime = localTime.getTime() + (localTime.getTimezoneOffset() * 60000);
             localTime = new Date(utcTime + (state.currentTimezoneOffset * 1000));
         }
-        const timeStr = localTime.toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit' });
-        ctx.fillText(timeStr, x, pTop + drawH + (4 * dpr));
-    }
 
-    // Draw Bars
-    const barWidth = Math.max(step * 0.7, 2 * dpr); // Bar width taking up 70% of the step space
-    
-    for (let i = 0; i < dataPoints.length; i++) {
-        const val = dataPoints[i];
-        const hx = getX(i);
-        const hy = getY(val);
-        const barH = (pTop + drawH) - hy;
+        let timeLabel = '';
+        let tempLabel = '';
+        
+        // If in 5D mode but NOT drilled down, show daily summary. Otherwise show 3-hourly data.
+        const isDailySummary = state.forecastMode === '5d' && state.selectedDayIndex == null;
 
-        // Apply Warning colors based on WHO guidelines of 15µg/m³
-        const rawPct = (val / 15) * 100;
-        if (rawPct > 100) {
-            ctx.fillStyle = (i === hoverIndex) ? '#A50E0E' : '#EA4335'; // Hover: g-red-dark, Default: g-red-medium
-        } else if (rawPct > 75) {
-            ctx.fillStyle = (i === hoverIndex) ? '#E37400' : '#FBBC04'; // Hover: g-orange, Default: g-yellow
+        if (isDailySummary) {
+            const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+            timeLabel = days[localTime.getDay()];
+            tempLabel = `${Math.round(item.temp.max)}°<span class="text-g-grey font-normal ml-0.5 text-[8px]">${Math.round(item.temp.min)}°</span>`;
         } else {
-            ctx.fillStyle = (i === hoverIndex) ? '#0D652D' : '#34A853'; // Hover: g-green-dark, Default: g-green-medium
+            timeLabel = localTime.toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit' });
+            tempLabel = `${Math.round(item.main.temp)}°`;
         }
 
-        ctx.beginPath();
-        // Use roundRect for softer modern corners if supported, otherwise fallback to fillRect would be handled silently by browsers but standard requires check.
-        if (ctx.roundRect) {
-            ctx.roundRect(hx - barWidth / 2, hy, barWidth, Math.max(barH, 1 * dpr), [2 * dpr, 2 * dpr, 0, 0]);
-        } else {
-            ctx.rect(hx - barWidth / 2, hy, barWidth, Math.max(barH, 1 * dpr));
-        }
-        ctx.fill();
-    }
-}
+        const fIconCode = item.weather[0].icon;
+        const fIconUrl = `https://openweathermap.org/img/wn/${fIconCode}@2x.png`;
+        const weatherDesc = item.weather[0].description;
+        const formattedDesc = weatherDesc.charAt(0).toUpperCase() + weatherDesc.slice(1);
 
-// --- NEW: Weather Icon Tooltip Functionality ---
-export function setupWeatherTooltips() {
-    let tooltipEl = document.getElementById('weather-tooltip');
-    
-    if (!tooltipEl) {
-        tooltipEl = document.createElement('div');
-        tooltipEl.id = 'weather-tooltip';
-        // Styled consistently with the chart tooltip matching Google's aesthetic
-        tooltipEl.className = 'fixed hidden bg-g-black text-g-grey-light text-xs py-1.5 px-2.5 rounded-lg border border-g-grey-dark shadow-xl z-[100] pointer-events-none transform -translate-x-1/2 -translate-y-full transition-colors duration-200 whitespace-nowrap';
-        document.body.appendChild(tooltipEl);
-    }
-
-    // Use event delegation to handle dynamically added forecast icons
-    document.addEventListener('mouseover', (e) => {
-        const icon = e.target.closest('.weather-icon');
-        if (icon) {
-            // Read details from standard data attributes on the icon element
-            const desc = icon.getAttribute('data-desc') || icon.getAttribute('alt') || 'Weather Condition';
-            const temp = icon.getAttribute('data-temp') || '';
-            const time = icon.getAttribute('data-time') || '';
-            
-            let innerHTML = `<div class="font-bold text-white capitalize">${desc}</div>`;
-            if (temp || time) {
-                // Displays Temp and Time combined if both exist, otherwise just one
-                innerHTML += `<div class="text-[10px] text-g-grey mt-0.5">${temp} ${temp && time ? '•' : ''} ${time}</div>`;
-            }
-            
-            tooltipEl.innerHTML = innerHTML;
-            
-            // Position dynamically directly above the icon
-            const rect = icon.getBoundingClientRect();
-            tooltipEl.style.left = `${rect.left + rect.width / 2}px`;
-            tooltipEl.style.top = `${rect.top - 8}px`;
-            tooltipEl.classList.remove('hidden');
-        }
+        forecastHTML += `
+            <div data-weather-desc="${formattedDesc}" ${isDailySummary ? `data-day-index="${index}"` : ''} class="${isDailySummary ? 'forecast-day-btn cursor-pointer shadow-sm hover:-translate-y-0.5' : 'cursor-help'} flex flex-col items-center min-w-[65px] bg-[#F8F9FA] rounded-lg p-2 border border-g-grey-light shrink-0 hover:bg-white transition-all">
+                <span class="text-[9px] text-g-grey-dark pointer-events-none font-bold">${timeLabel}</span>
+                <img src="${fIconUrl}" alt="${weatherDesc}" class="w-8 h-8 object-contain drop-shadow-[0_2px_3px_rgba(0,0,0,0.35)] my-0.5 pointer-events-none" />
+                <span class="text-[10px] font-bold text-g-black pointer-events-none flex items-baseline">${tempLabel}</span>
+            </div>
+        `;
     });
+    
+    forecastContainer.innerHTML = forecastHTML;
 
-    // Hide tooltip when moving the mouse off the icon
-    document.addEventListener('mouseout', (e) => {
-        const icon = e.target.closest('.weather-icon');
-        if (icon) {
+    // Attach click listeners for 5-Day items to initiate the drill-down
+    if (state.forecastMode === '5d' && state.selectedDayIndex == null) {
+        document.querySelectorAll('.forecast-day-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                state.selectedDayIndex = parseInt(e.currentTarget.getAttribute('data-day-index'), 10);
+                renderWeatherForecast();
+            });
+        });
+    }
+
+    forecastContainer.onmousemove = (e) => {
+        const target = e.target.closest('[data-weather-desc]');
+        if (target) {
+            tooltipEl.innerText = target.getAttribute('data-weather-desc');
+            tooltipEl.style.left = e.clientX + 'px';
+            tooltipEl.style.top = (e.clientY - 15) + 'px';
+            tooltipEl.classList.remove('hidden');
+        } else {
             tooltipEl.classList.add('hidden');
         }
-    });
+    };
+    
+    forecastContainer.onmouseleave = () => {
+        tooltipEl.classList.add('hidden');
+    };
 }

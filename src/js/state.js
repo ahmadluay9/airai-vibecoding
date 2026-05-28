@@ -33,5 +33,16 @@ export const state = {
     syncIntervalId: null,
     currentTimezoneOffset: 0,
     isTimezoneSet: false,
-    isAudioEnabled: false
+    isAudioEnabled: false,
+
+    // Forecast Tracking
+    forecastMode: '24h',
+    weatherForecastData24h: [],
+    weatherForecastData5d: [],
+    
+    // PM2.5 Tracking
+    selectedPollutant: 'pm2_5',
+    pm25ForecastMode: '24h',
+    pm25ForecastData24h: [],
+    pm25ForecastData5d: []
 };

@@ -9,6 +9,38 @@
     <!-- CSS Dependencies -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <link rel="stylesheet" href="/src/styles/main.css">
+
+    <!-- Fallback Tailwind Config to guarantee layout and colors work regardless of environment -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'g-blue': '#174EA6',
+                        'g-red': '#A50E0E',
+                        'g-orange': '#E37400',
+                        'g-green': '#0D652D',
+                        'g-blue-medium': '#4285F4',
+                        'g-red-medium': '#EA4335',
+                        'g-yellow': '#FBBC04',
+                        'g-green-medium': '#34A853',
+                        'g-blue-light': '#D2E3FC',
+                        'g-red-light': '#FAD2CF',
+                        'g-yellow-light': '#FEEFC3',
+                        'g-green-light': '#CEEAD6',
+                        'g-grey-light': '#F1F3F4',
+                        'g-grey': '#9AA0A6',
+                        'g-grey-dark': '#5F6368',
+                        'g-black': '#202124',
+                    },
+                    fontFamily: {
+                        sans: ['Google Sans', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
 </head>
 
 <body id="body-bg" class="font-sans antialiased text-g-black bg-[#F8F9FA] h-screen w-screen overflow-hidden flex flex-col relative">
@@ -60,75 +92,80 @@
             <div class="lg:col-span-3 flex flex-col gap-3 min-h-0">
                 
                 <!-- Merged Geo Ledger Card -->
-                <div class="flex-1 bg-white/95 backdrop-blur-md border border-g-grey-light rounded-2xl p-3 card-shadow flex flex-col gap-2 min-h-0 overflow-y-auto custom-scrollbar">
+                <div class="flex-1 bg-white/95 backdrop-blur-md border border-g-grey-light rounded-2xl p-4 card-shadow flex flex-col gap-2 min-h-0 overflow-y-auto custom-scrollbar">
                     
                     <!-- Location Intelligence Section -->
-                    <div class="shrink-0">
-                        <div class="text-[9px] font-bold text-g-grey tracking-widest uppercase flex items-center gap-1 mb-1.5">
+                    <div class="shrink-0 mb-2">
+                        <div class="text-[10px] font-bold text-g-grey tracking-widest uppercase mb-3">
                             Location Intelligence
                         </div>
 
-                        <!-- Current Location moved above Local Time -->
-                        <div class="flex flex-col gap-0.5 mb-1.5">
-                            <span class="text-[9px] text-g-grey font-bold uppercase tracking-wider">Current Location</span>
-                            <h3 id="location-name" class="text-sm font-bold text-g-black leading-tight truncate pr-2">Locating...</h3>
+                        <div class="mb-3">
+                            <span class="text-[8px] font-bold text-g-grey uppercase tracking-widest block mb-0.5 pl-1">Current Location</span>
+                            <div class="bg-[#F8F9FA] border border-g-grey-light rounded-xl p-2.5 flex items-center transition-colors hover:bg-white shadow-sm">
+                                <h3 id="location-name" class="text-sm font-bold text-g-black leading-tight truncate">Locating...</h3>
+                            </div>
                         </div>
 
-                        <div class="flex flex-col gap-0.5 mb-1.5 w-full">
-                            <span class="text-[9px] text-g-grey font-bold uppercase tracking-wider">Local Time</span>
-                            <div id="local-time" class="text-xl font-black text-g-black tracking-tight leading-none flex justify-between items-center w-full">-</div>
+                        <div class="mb-3">
+                            <span class="text-[8px] font-bold text-g-grey uppercase tracking-widest block mb-0.5 pl-1">Local Time</span>
+                            <div class="bg-[#F8F9FA] border border-g-grey-light rounded-xl p-2.5 flex items-center transition-colors hover:bg-white shadow-sm">
+                                <div id="local-time" class="text-sm font-bold text-g-black leading-tight flex justify-between items-center w-full">-</div>
+                            </div>
                         </div>
-                        <div class="flex flex-col gap-0.5">
-                            <span class="text-[9px] text-g-grey font-bold uppercase tracking-wider">Current Weather</span>
-                            <span id="header-weather" class="text-sm font-bold text-g-black leading-tight flex flex-wrap items-center gap-1.5">-</span>
+                        
+                        <div class="mb-2">
+                            <span class="text-[8px] font-bold text-g-grey uppercase tracking-widest block mb-0.5 pl-1">Current Weather</span>
+                            <div class="bg-[#F8F9FA] border border-g-grey-light rounded-xl p-2.5 flex items-center transition-colors hover:bg-white shadow-sm">
+                                <span id="header-weather" class="text-sm font-bold text-g-black leading-tight flex items-center gap-2 uppercase w-full truncate">-</span>
+                            </div>
                         </div>
                     </div>
 
-                    <!-- Environment Tiles Merged Here (Expanded & Flexible to fill space) -->
-                    <div class="flex-1 flex flex-col gap-2 mt-1 min-h-[160px]">
-                        <div class="flex-[2] grid grid-cols-3 gap-2">
-                            <div class="bg-[#F8F9FA] border border-g-grey-light rounded-xl p-2 flex flex-col items-center justify-center text-center transition-colors hover:bg-white h-full w-full">
+                    <!-- Environment Tiles -->
+                    <div class="flex flex-col gap-2 mt-1 shrink-0">
+                        <div class="grid grid-cols-3 gap-2">
+                            <div class="bg-[#F8F9FA] border border-g-grey-light rounded-xl p-2 flex flex-col items-center justify-center text-center transition-colors hover:bg-white w-full">
                                 <img src="/src/assets/icons/wind.png" alt="Wind" class="w-5 h-5 mb-1.5 opacity-90 drop-shadow-[0_2px_3px_rgba(0,0,0,0.4)]" onerror="this.style.display='none'">
                                 <span class="text-[8px] font-bold text-g-grey uppercase tracking-widest mb-0.5">Wind</span>
                                 <span id="env-wind" class="text-xs font-bold text-g-black leading-none cursor-help border-b border-dashed border-g-grey/60 pb-px" data-js-tooltip="Loading...">-</span>
                             </div>
-                            <div class="bg-[#F8F9FA] border border-g-grey-light rounded-xl p-2 flex flex-col items-center justify-center text-center transition-colors hover:bg-white h-full w-full">
+                            <div class="bg-[#F8F9FA] border border-g-grey-light rounded-xl p-2 flex flex-col items-center justify-center text-center transition-colors hover:bg-white w-full">
                                 <img src="/src/assets/icons/humidity.png" alt="Humidity" class="w-5 h-5 mb-1.5 opacity-90 drop-shadow-[0_2px_3px_rgba(0,0,0,0.4)]" onerror="this.style.display='none'">
                                 <span class="text-[8px] font-bold text-g-grey uppercase tracking-widest mb-0.5">Humidity</span>
                                 <span id="env-humidity" class="text-xs font-bold text-g-black leading-none cursor-help border-b border-dashed border-g-grey/60 pb-px" data-js-tooltip="Loading...">-</span>
                             </div>
-                            <div class="bg-[#F8F9FA] border border-g-grey-light rounded-xl p-2 flex flex-col items-center justify-center text-center transition-colors hover:bg-white h-full w-full">
+                            <div class="bg-[#F8F9FA] border border-g-grey-light rounded-xl p-2 flex flex-col items-center justify-center text-center transition-colors hover:bg-white w-full">
                                 <img src="/src/assets/icons/uv-index.png" alt="UV Index" class="w-5 h-5 mb-1.5 opacity-90 drop-shadow-[0_2px_3px_rgba(0,0,0,0.4)]" onerror="this.style.display='none'">
                                 <span class="text-[8px] font-bold text-g-grey uppercase tracking-widest mb-0.5">UV Index</span>
                                 <span id="env-uv" class="text-xs font-bold text-g-black leading-none cursor-help border-b border-dashed border-g-grey/60 pb-px" data-js-tooltip="Loading...">-</span>
                             </div>
                             
-                            <!-- Extended Environment Tiles -->
-                            <div class="bg-[#F8F9FA] border border-g-grey-light rounded-xl p-2 flex flex-col items-center justify-center text-center transition-colors hover:bg-white h-full w-full">
+                            <div class="bg-[#F8F9FA] border border-g-grey-light rounded-xl p-2 flex flex-col items-center justify-center text-center transition-colors hover:bg-white w-full">
                                 <img src="/src/assets/icons/thermometer.png" alt="Feels Like" class="w-5 h-5 mb-1.5 opacity-90 drop-shadow-[0_2px_3px_rgba(0,0,0,0.4)]" onerror="this.style.display='none'">
                                 <span class="text-[8px] font-bold text-g-grey uppercase tracking-widest mb-0.5">Feels Like</span>
                                 <span id="env-feels-like" class="text-xs font-bold text-g-black leading-none cursor-help border-b border-dashed border-g-grey/60 pb-px" data-js-tooltip="Loading...">-</span>
                             </div>
-                            <div class="bg-[#F8F9FA] border border-g-grey-light rounded-xl p-2 flex flex-col items-center justify-center text-center transition-colors hover:bg-white h-full w-full">
+                            <div class="bg-[#F8F9FA] border border-g-grey-light rounded-xl p-2 flex flex-col items-center justify-center text-center transition-colors hover:bg-white w-full">
                                 <img src="/src/assets/icons/atmospheric.png" alt="Pressure" class="w-5 h-5 mb-1.5 opacity-90 drop-shadow-[0_2px_3px_rgba(0,0,0,0.4)]" onerror="this.style.display='none'">
                                 <span class="text-[8px] font-bold text-g-grey uppercase tracking-widest mb-0.5">Pressure</span>
                                 <span id="env-pressure" class="text-xs font-bold text-g-black leading-none cursor-help border-b border-dashed border-g-grey/60 pb-px" data-js-tooltip="Loading...">-</span>
                             </div>
-                            <div class="bg-[#F8F9FA] border border-g-grey-light rounded-xl p-2 flex flex-col items-center justify-center text-center transition-colors hover:bg-white h-full w-full">
+                            <div class="bg-[#F8F9FA] border border-g-grey-light rounded-xl p-2 flex flex-col items-center justify-center text-center transition-colors hover:bg-white w-full">
                                 <img src="/src/assets/icons/visibility.png" alt="Visibility" class="w-5 h-5 mb-1.5 opacity-90 drop-shadow-[0_2px_3px_rgba(0,0,0,0.4)]" onerror="this.style.display='none'">
                                 <span class="text-[8px] font-bold text-g-grey uppercase tracking-widest mb-0.5">Visibility</span>
                                 <span id="env-visibility" class="text-xs font-bold text-g-black leading-none cursor-help border-b border-dashed border-g-grey/60 pb-px" data-js-tooltip="Loading...">-</span>
                             </div>
                         </div>
                         
-                        <!-- Sunrise & Sunset Tiles in a 2-Column Grid for balance -->
-                        <div class="flex-1 grid grid-cols-2 gap-2">
-                            <div class="bg-[#F8F9FA] border border-g-grey-light rounded-xl p-2 flex flex-col items-center justify-center text-center transition-colors hover:bg-white h-full w-full">
+                        <!-- Sunrise & Sunset Tiles restored to a 2-Column Grid -->
+                        <div class="grid grid-cols-2 gap-2">
+                            <div class="bg-[#F8F9FA] border border-g-grey-light rounded-xl p-2 flex flex-col items-center justify-center text-center transition-colors hover:bg-white w-full">
                                 <img src="/src/assets/icons/sunrise.png" alt="Sunrise" class="w-5 h-5 mb-1.5 opacity-90 drop-shadow-[0_2px_3px_rgba(0,0,0,0.4)]" onerror="this.style.display='none'">
                                 <span class="text-[8px] font-bold text-g-grey uppercase tracking-widest mb-0.5">Sunrise</span>
                                 <span id="env-sunrise" class="text-xs font-bold text-g-black leading-none cursor-help border-b border-dashed border-g-grey/60 pb-px" data-js-tooltip="Loading...">-</span>
                             </div>
-                            <div class="bg-[#F8F9FA] border border-g-grey-light rounded-xl p-2 flex flex-col items-center justify-center text-center transition-colors hover:bg-white h-full w-full">
+                            <div class="bg-[#F8F9FA] border border-g-grey-light rounded-xl p-2 flex flex-col items-center justify-center text-center transition-colors hover:bg-white w-full">
                                 <img src="/src/assets/icons/sunset.png" alt="Sunset" class="w-5 h-5 mb-1.5 opacity-90 drop-shadow-[0_2px_3px_rgba(0,0,0,0.4)]" onerror="this.style.display='none'">
                                 <span class="text-[8px] font-bold text-g-grey uppercase tracking-widest mb-0.5">Sunset</span>
                                 <span id="env-sunset" class="text-xs font-bold text-g-black leading-none cursor-help border-b border-dashed border-g-grey/60 pb-px" data-js-tooltip="Loading...">-</span>
@@ -136,32 +173,42 @@
                         </div>
                     </div>
 
-                    <hr class="border-g-grey-light my-1 shrink-0">
+                    <hr class="border-g-grey-light my-3 shrink-0">
 
-                    <!-- Moved Weather Forecast Container -->
+                    <!-- Interactive Weather Forecast Container -->
                     <div class="flex flex-col gap-1.5 shrink-0 mb-1">
                         <div class="flex justify-between items-center px-1">
-                            <span class="text-[8px] font-bold text-g-grey uppercase tracking-widest">24H Weather Forecast</span>
-                        </div>
-                        <div id="weather-forecast-container" class="flex overflow-x-auto custom-scrollbar pb-1 gap-1.5 items-center w-full"></div>
-                    </div>
-
-                    <hr class="border-g-grey-light my-1 shrink-0">
-
-                    <!-- Condensed GPS / System Data Section -->
-                    <div class="grid grid-cols-2 gap-1.5 font-mono text-[8.5px] shrink-0 mt-0.5">
-                        <div class="bg-[#F8F9FA] p-1.5 rounded border border-g-grey-light flex flex-col gap-0.5">
-                            <span class="text-g-grey">GPS Coords</span>
-                            <div class="font-bold text-g-black truncate">
-                                <div>Lat: <span id="geo-lat">-</span></div>
-                                <div class="mt-0.5">Lon: <span id="geo-lon">-</span></div>
+                            <div class="flex items-center gap-2 min-w-0">
+                                <button id="btn-forecast-back" class="hidden shrink-0 text-[8px] font-bold text-g-blue-medium hover:text-g-blue uppercase tracking-widest flex items-center gap-0.5 transition-colors">
+                                    <svg class="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
+                                    Back
+                                </button>
+                                <span id="forecast-title" class="text-[8px] font-bold text-g-grey uppercase tracking-widest truncate">Weather Forecast</span>
+                            </div>
+                            <div class="flex shrink-0 items-center bg-[#F8F9FA] rounded-full p-0.5 border border-g-grey-light shadow-sm" id="forecast-toggles">
+                                <button id="toggle-24h" class="px-2.5 py-0.5 text-[8px] font-bold rounded-full bg-white shadow-sm text-g-black transition-all">24H</button>
+                                <button id="toggle-5d" class="px-2.5 py-0.5 text-[8px] font-bold rounded-full text-g-grey hover:text-g-black transition-all bg-transparent">5D</button>
                             </div>
                         </div>
-                        <div class="bg-[#F8F9FA] p-1.5 rounded border border-g-grey-light flex flex-col gap-0.5">
-                            <span class="text-g-grey">System Link</span>
-                            <div class="font-bold text-g-black truncate">
+                        <div id="weather-forecast-container" class="flex overflow-x-auto custom-scrollbar pb-1 gap-2 items-center w-full min-h-[75px]"></div>
+                    </div>
+
+                    <hr class="border-g-grey-light my-3 shrink-0">
+
+                    <!-- Condensed GPS / System Data Section -->
+                    <div class="grid grid-cols-2 gap-2 font-mono text-[9px] shrink-0">
+                        <div class="bg-[#F8F9FA] p-2 rounded-xl border border-g-grey-light flex flex-col gap-0.5">
+                            <span class="text-g-grey uppercase tracking-widest font-bold text-[8px] mb-0.5">GPS Coords</span>
+                            <div class="font-bold text-g-black truncate space-y-0.5">
+                                <div>Lat: <span id="geo-lat">-</span></div>
+                                <div>Lon: <span id="geo-lon">-</span></div>
+                            </div>
+                        </div>
+                        <div class="bg-[#F8F9FA] p-2 rounded-xl border border-g-grey-light flex flex-col gap-0.5">
+                            <span class="text-g-grey uppercase tracking-widest font-bold text-[8px] mb-0.5">System Link</span>
+                            <div class="font-bold text-g-black truncate space-y-0.5">
                                 <div class="flex items-center gap-1">API: <span id="api-status" class="flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full bg-g-grey animate-pulse"></span> Con...</span></div>
-                                <div class="mt-0.5">Sync: <span id="header-sync">-</span></div>
+                                <div>Sync: <span id="header-sync">-</span></div>
                             </div>
                         </div>
                     </div>
@@ -172,7 +219,7 @@
             <!-- MIDDLE COLUMN: Expanded Pollutants & Charts (col-span-5) -->
             <div class="lg:col-span-5 flex flex-col gap-3 min-h-0">
                 
-                <!-- Expanded Pollutants Card (Now includes AQI) -->
+                <!-- Expanded Pollutants Card -->
                 <div class="flex-1 bg-white/95 backdrop-blur-md border border-g-grey-light rounded-2xl p-4 card-shadow flex flex-col min-h-0 overflow-y-auto custom-scrollbar">
                     
                     <!-- AQI & Advice Merged Section -->
@@ -221,9 +268,7 @@
                         <div class="text-[9px] text-g-grey-dark hidden sm:block">Ref: <span class="font-bold text-g-black">WHO Guidelines</span></div>
                     </div>
 
-                    <!-- Increased gap and padding for expanded look -->
-                    <div class="flex-1 overflow-y-auto custom-scrollbar grid grid-cols-2 sm:grid-cols-3 gap-2.5 pr-1 pb-1">
-                        
+                    <div class="grid grid-cols-2 sm:grid-cols-3 gap-2.5 shrink-0 pb-2">
                         <div class="bg-white border border-g-grey-light rounded-xl p-3 flex flex-col justify-between shadow-sm">
                             <div class="flex justify-between items-start mb-1">
                                 <div><h3 class="text-xs font-black text-g-black leading-none">PM2.5</h3><p class="text-[8px] text-g-grey mt-0.5">Fine Dust</p></div>
@@ -283,18 +328,30 @@
                             <div class="flex justify-between text-[8px] text-g-grey font-medium mb-1.5"><span>Lim: 40µg</span><span id="pct-so2">-</span></div>
                             <div class="h-1.5 bg-g-grey-light rounded-full w-full"><div id="bar-so2" class="h-full bg-g-grey rounded-full w-0 transition-all duration-700"></div></div>
                         </div>
-                        
                     </div>
                 </div>
 
-                <!-- Increased Size PM 2.5 Chart Container -->
+                <!-- Increased Size Chart Container with Pollutant Toggle -->
                 <div class="shrink-0 h-40">
                     <div class="bg-white/95 backdrop-blur-md border border-g-grey-light rounded-2xl p-3 card-shadow flex flex-col h-full w-full">
-                        <div class="flex justify-between items-center mb-1 shrink-0">
-                            <span class="text-[8px] font-bold text-g-grey uppercase tracking-widest">PM2.5 Forecast</span>
-                            <span class="text-[7px] text-g-blue-medium flex items-center gap-1"><span class="w-1 h-1 rounded-full bg-g-blue-medium animate-pulse"></span> 24H</span>
+                        <div class="flex justify-between items-center mb-1 shrink-0 px-1">
+                            <div class="flex items-center bg-[#F8F9FA] rounded-full p-0.5 border border-g-grey-light shadow-sm relative">
+                                <select id="pollutant-selector" class="appearance-none bg-white text-[8px] font-bold text-g-black uppercase tracking-widest cursor-pointer outline-none transition-all pl-2 pr-5 py-0.5 rounded-full shadow-sm z-10">
+                                    <option value="pm2_5">PM2.5 Forecast</option>
+                                    <option value="pm10">PM10 Forecast</option>
+                                    <option value="co">CO Forecast</option>
+                                    <option value="no2">NO2 Forecast</option>
+                                    <option value="o3">O3 Forecast</option>
+                                    <option value="so2">SO2 Forecast</option>
+                                </select>
+                                <svg class="w-2 h-2 text-g-black absolute right-1.5 z-20 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M19 9l-7 7-7-7"></path></svg>
+                            </div>
+                            <div class="flex items-center bg-[#F8F9FA] rounded-full p-0.5 border border-g-grey-light shadow-sm" id="pm25-forecast-toggles">
+                                <button id="pm25-toggle-24h" class="px-2 py-0.5 text-[8px] font-bold rounded-full bg-white shadow-sm text-g-black transition-all">24H</button>
+                                <button id="pm25-toggle-5d" class="px-2 py-0.5 text-[8px] font-bold rounded-full text-g-grey hover:text-g-black transition-all bg-transparent">5D</button>
+                            </div>
                         </div>
-                        <div class="flex-1 relative w-full h-full">
+                        <div class="flex-1 relative w-full h-full mt-1">
                             <canvas id="pm25-sparkline" class="absolute inset-0 w-full h-full"></canvas>
                         </div>
                     </div>
@@ -334,39 +391,49 @@
                     </div>
 
                     <div id="ai-content-block" class="flex-1 flex flex-col min-h-0 gap-3">
-                        <div class="flex items-center gap-2 shrink-0">
-                            <div class="w-6 h-6 rounded-lg bg-g-blue-medium/20 flex items-center justify-center shrink-0">
-                                <img src="https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/google-gemini.svg" alt="Gemini AI" class="w-4 h-4 object-contain" onerror="this.style.display='none'" />
+                        <div class="flex items-center justify-between shrink-0">
+                            <div class="flex items-center gap-2">
+                                <div class="w-6 h-6 rounded-lg bg-g-blue-medium/20 flex items-center justify-center shrink-0">
+                                    <img src="https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/google-gemini.svg" alt="Gemini AI" class="w-4 h-4 object-contain" onerror="this.style.display='none'" />
+                                </div>
+                                <div>
+                                    <div class="text-[7px] font-bold text-g-blue-medium tracking-widest uppercase">AI Cognitive Guard</div>
+                                    <h2 class="text-xs font-black text-white leading-none mt-0.5">Clinician Advisory</h2>
+                                </div>
                             </div>
-                            <div>
-                                <div class="text-[7px] font-bold text-g-blue-medium tracking-widest uppercase">AI Cognitive Guard</div>
-                                <h2 class="text-xs font-black text-white leading-none mt-0.5">Clinician Advisory</h2>
+                            <!-- Pop-up button -->
+                            <button id="btn-ai-popup" class="p-1.5 rounded-md text-g-grey hover:text-white hover:bg-white/10 border border-white/20 transition-colors" title="Expand View">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"></path></svg>
+                            </button>
+                        </div>
+
+                        <!-- Dropdown Profile Selector -->
+                        <div class="shrink-0 relative w-full">
+                            <select id="profile-selector" class="w-full appearance-none bg-white/10 border border-white/20 text-white px-3 py-1.5 rounded-lg text-[9px] font-semibold focus:outline-none focus:border-g-blue-medium/50 transition-colors shadow-sm cursor-pointer pr-8">
+                                <option value="General" class="bg-g-black text-white">Target Profile: General</option>
+                                <option value="Children" class="bg-g-black text-white">Target Profile: Children</option>
+                                <option value="Asthma" class="bg-g-black text-white">Target Profile: Asthma</option>
+                                <option value="Seniors" class="bg-g-black text-white">Target Profile: Seniors</option>
+                                <option value="Athletes/Joggers" class="bg-g-black text-white">Target Profile: Athletes/Joggers</option>
+                                <option value="Motorcyclist" class="bg-g-black text-white">Target Profile: Motorcyclist</option>
+                                <option value="Pregnant Women" class="bg-g-black text-white">Target Profile: Pregnant Women</option>
+                            </select>
+                            <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-g-grey-light">
+                                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
                             </div>
                         </div>
 
-                        <div class="shrink-0">
-                            <div class="flex flex-wrap gap-1" id="profile-selector">
-                                <button class="profile-btn active bg-g-blue-medium text-white border-g-blue-medium px-2 py-0.5 rounded-full border text-[8px] font-semibold transition-colors shadow-sm" data-profile="General">General</button>
-                                <button class="profile-btn bg-white/5 text-g-grey-light border-white/10 hover:bg-white/10 px-2 py-0.5 rounded-full border text-[8px] font-semibold transition-colors" data-profile="Children">Children</button>
-                                <button class="profile-btn bg-white/5 text-g-grey-light border-white/10 hover:bg-white/10 px-2 py-0.5 rounded-full border text-[8px] font-semibold transition-colors" data-profile="Asthma">Asthma</button>
-                                <button class="profile-btn bg-white/5 text-g-grey-light border-white/10 hover:bg-white/10 px-2 py-0.5 rounded-full border text-[8px] font-semibold transition-colors" data-profile="Seniors">Seniors</button>
-                                <button class="profile-btn bg-white/5 text-g-grey-light border-white/10 hover:bg-white/10 px-2 py-0.5 rounded-full border text-[8px] font-semibold transition-colors" data-profile="Athletes/Joggers">Athletes/Joggers</button>
-                                <button class="profile-btn bg-white/5 text-g-grey-light border-white/10 hover:bg-white/10 px-2 py-0.5 rounded-full border text-[8px] font-semibold transition-colors" data-profile="Motorcyclist">Motorcyclist</button>
-                                <button class="profile-btn bg-white/5 text-g-grey-light border-white/10 hover:bg-white/10 px-2 py-0.5 rounded-full border text-[8px] font-semibold transition-colors" data-profile="Pregnant Women">Pregnant Women</button>
-                            </div>
-                        </div>
-
-                        <div class="flex-1 overflow-y-auto custom-scrollbar space-y-2 pr-1">
+                        <div class="flex-1 overflow-y-auto dark-scrollbar space-y-2 pr-1">
                             <div class="bg-white/5 border border-white/10 rounded-xl p-3">
                                 <h3 class="text-[8px] font-bold text-g-blue-medium tracking-widest uppercase mb-1.5">Safety Digest</h3>
-                                <p id="ai-digest" class="text-g-grey-light text-[10px] leading-relaxed font-medium">Waiting for environmental sensor sync...</p>
+                                <div id="ai-digest" class="text-g-grey-light text-[10px] leading-relaxed font-medium">Waiting for environmental sensor sync...</div>
                             </div>
                             
                             <div id="personalized-block" class="bg-g-blue-medium/10 border border-g-blue-medium/20 rounded-xl p-3 hidden">
                                 <h3 class="text-[10px] font-bold text-white mb-1.5 flex items-center gap-1">
                                     <span class="text-g-blue-light text-xs leading-none">🎯</span> <span id="personalized-title">Advice</span>
                                 </h3>
-                                <p id="ai-personalized" class="text-[9px] text-g-grey-light leading-relaxed"></p>
+                                <div id="ai-personalized" class="text-[9px] text-g-grey-light leading-relaxed"></div>
                             </div>
                         </div>
                     </div>
@@ -378,7 +445,7 @@
         <!-- Data Sources Footer -->
         <div class="px-2 sm:px-4 pb-2 mt-1 shrink-0 w-full">
             <div class="bg-white/60 backdrop-blur-sm border border-g-grey-light rounded-2xl p-4 flex flex-col md:flex-row justify-between items-center gap-4 text-xs text-g-grey-dark w-full">
-                <div class="font-bold text-g-grey tracking-widest uppercase text-[10px]">
+                <div class="font-bold text-g-grey tracking-widest uppercase text-[10px] hidden sm:block">
                     Luminair Environment Hub
                 </div>
                 <div class="flex flex-wrap items-center justify-center gap-4 text-[10px] font-medium">
@@ -423,11 +490,74 @@
     <button id="btn-map-toggle" class="hidden"></button>
     <button id="btn-close-map" class="hidden"></button>
     <button id="btn-cancel-map" class="hidden"></button>
+    
+    <!-- AI Modal Overlay -->
+    <div id="ai-modal" class="hidden fixed inset-0 z-[1000] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 sm:p-6 opacity-0 transition-opacity duration-300">
+        <div class="bg-g-black border border-white/20 rounded-2xl w-full max-w-2xl max-h-full flex flex-col shadow-2xl transform scale-95 transition-transform duration-300" id="ai-modal-content">
+            <!-- Header -->
+            <div class="flex items-center justify-between p-4 border-b border-white/10 shrink-0">
+                <div class="flex items-center gap-3">
+                    <div class="w-8 h-8 rounded-lg bg-g-blue-medium/20 flex items-center justify-center shrink-0">
+                        <img src="https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/google-gemini.svg" alt="Gemini AI" class="w-5 h-5 object-contain" onerror="this.style.display='none'" />
+                    </div>
+                    <div>
+                        <div class="text-[9px] font-bold text-g-blue-medium tracking-widest uppercase">AI Cognitive Guard</div>
+                        <h2 class="text-base font-black text-white leading-none mt-0.5">Clinician Advisory Full Report</h2>
+                    </div>
+                </div>
+                <button id="btn-close-ai" class="p-2 rounded-full text-g-grey hover:text-white hover:bg-white/10 transition-colors">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+            </div>
+            
+            <!-- Modal Profile Selector -->
+            <div class="px-4 sm:px-6 pt-4 shrink-0">
+                <div class="relative w-full">
+                    <select id="modal-profile-selector" class="w-full appearance-none bg-white/5 border border-white/10 text-white px-3 py-2.5 rounded-lg text-xs font-semibold focus:outline-none focus:border-g-blue-medium/50 transition-colors shadow-sm cursor-pointer pr-8 hover:bg-white/10">
+                        <option value="General" class="bg-g-black text-white">Target Profile: General</option>
+                        <option value="Children" class="bg-g-black text-white">Target Profile: Children</option>
+                        <option value="Asthma" class="bg-g-black text-white">Target Profile: Asthma</option>
+                        <option value="Seniors" class="bg-g-black text-white">Target Profile: Seniors</option>
+                        <option value="Athletes/Joggers" class="bg-g-black text-white">Target Profile: Athletes/Joggers</option>
+                        <option value="Motorcyclist" class="bg-g-black text-white">Target Profile: Motorcyclist</option>
+                        <option value="Pregnant Women" class="bg-g-black text-white">Target Profile: Pregnant Women</option>
+                    </select>
+                    <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-g-grey-light">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Body -->
+            <div class="p-4 sm:p-6 overflow-y-auto dark-scrollbar flex-1 space-y-4" id="ai-modal-body">
+                <!-- Cloned content goes here -->
+            </div>
+        </div>
+    </div>
 
     <!-- Leaflet JS -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     
     <!-- Module Script -->
     <script type="module" src="/src/js/main.js"></script>
+
+    <!-- Sync Map Initialization Without Altering main.js -->
+    <script>
+        window.addEventListener('DOMContentLoaded', () => {
+            const mapToggle = document.getElementById('btn-map-toggle');
+            
+            // Initial map load trigger
+            setTimeout(() => { if (mapToggle) mapToggle.click(); }, 800);
+            
+            // Observe live GPS coordinate changes to actively re-center the widget map
+            const latEl = document.getElementById('geo-lat');
+            if (latEl) {
+                const observer = new MutationObserver(() => {
+                    if (mapToggle) mapToggle.click();
+                });
+                observer.observe(latEl, { childList: true, characterData: true, subtree: true });
+            }
+        });
+    </script>
 </body>
 </html>

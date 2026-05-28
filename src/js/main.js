@@ -2,11 +2,13 @@ import { state } from './state.js';
 import { initCanvas } from './canvas.js';
 import { performLocationSync, fetchLocationName, fetchRealAirData, analyzeAirWithGemini, searchLocation } from './api.js';
 import { initGlobalTooltip } from './utils.js';
+import { renderPM25Sparkline, renderWeatherForecast } from './ui.js';
 
 const startAutoSync = () => {
     if (state.syncIntervalId) clearInterval(state.syncIntervalId);
     state.syncIntervalId = setInterval(async () => {
         await fetchRealAirData(state.currentLat, state.currentLon);
+        analyzeAirWithGemini(); // FIXED: Force AI advisory to regenerate with the newly synced data
     }, 15 * 60 * 1000); 
 };
 
@@ -16,21 +18,25 @@ function startLiveClock() {
         const clockEl = document.getElementById('local-time');
         if (!clockEl) return;
         
-        let now = new Date();
-        // Shift time to match the currently viewed location's timezone offset
-        if (state.isTimezoneSet) {
-            const utc = now.getTime() + (now.getTimezoneOffset() * 60000);
-            now = new Date(utc + (state.currentTimezoneOffset * 1000));
-        }
-        
+        const now = new Date();
         const dateOpts = { month: 'short', day: 'numeric', year: 'numeric' };
         // Enforce 24-hour format with colons for strict readability
         const timeOpts = { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' };
         
-        const dateStr = now.toLocaleDateString('en-US', dateOpts);
-        const timeStr = now.toLocaleTimeString('en-US', timeOpts);
-        
-        clockEl.innerHTML = `<span>${dateStr}</span><span>${timeStr}</span>`;
+        if (state.isTimezoneSet) {
+            // FIXED: Safely calculate target local time by mapping to UTC, bypassing the browser's local DST rules
+            const targetTime = new Date(now.getTime() + (state.currentTimezoneOffset * 1000));
+            dateOpts.timeZone = 'UTC';
+            timeOpts.timeZone = 'UTC';
+            
+            const dateStr = targetTime.toLocaleDateString('en-US', dateOpts);
+            const timeStr = targetTime.toLocaleTimeString('en-US', timeOpts);
+            clockEl.innerHTML = `<span>${dateStr}</span><span>${timeStr}</span>`;
+        } else {
+            const dateStr = now.toLocaleDateString('en-US', dateOpts);
+            const timeStr = now.toLocaleTimeString('en-US', timeOpts);
+            clockEl.innerHTML = `<span>${dateStr}</span><span>${timeStr}</span>`;
+        }
     }, 1000);
 }
 
@@ -139,9 +145,108 @@ function initMapModal() {
     }
 }
 
+function initAiModal() {
+    const aiModal = document.getElementById('ai-modal');
+    const btnAiPopup = document.getElementById('btn-ai-popup');
+    const btnCloseAi = document.getElementById('btn-close-ai');
+    const aiModalBody = document.getElementById('ai-modal-body');
+    const modalProfileSelector = document.getElementById('modal-profile-selector');
+    const mainProfileSelector = document.getElementById('profile-selector');
+
+    if (btnAiPopup && aiModal && btnCloseAi && aiModalBody) {
+        const refreshModalContent = () => {
+            const digestHtml = document.getElementById('ai-digest')?.innerHTML || '';
+            const personalizedHtml = document.getElementById('ai-personalized')?.innerHTML || '';
+            const profileName = mainProfileSelector?.value || 'General';
+            const isPersonalizedHidden = document.getElementById('personalized-block')?.classList.contains('hidden');
+
+            let modalHtml = `
+                <div class="bg-white/5 border border-white/10 rounded-xl p-4 sm:p-5">
+                    <h3 class="text-[10px] font-bold text-g-blue-medium tracking-widest uppercase mb-2">Safety Digest</h3>
+                    <div class="text-g-grey-light text-xs sm:text-sm leading-relaxed font-medium">${digestHtml}</div>
+                </div>
+            `;
+
+            if (!isPersonalizedHidden && personalizedHtml) {
+                modalHtml += `
+                    <div class="bg-g-blue-medium/10 border border-g-blue-medium/20 rounded-xl p-4 sm:p-5">
+                        <h3 class="text-xs sm:text-sm font-bold text-white mb-2 flex items-center gap-1.5">
+                            <span class="text-g-blue-light text-base leading-none">🎯</span> Guidance for ${profileName}
+                        </h3>
+                        <div class="text-xs sm:text-sm text-g-grey-light leading-relaxed">${personalizedHtml}</div>
+                    </div>
+                `;
+            }
+
+            aiModalBody.innerHTML = modalHtml;
+            
+            if (modalProfileSelector && modalProfileSelector.value !== profileName) {
+                modalProfileSelector.value = profileName;
+            }
+        };
+
+        const openAiModal = () => {
+            refreshModalContent();
+            
+            aiModal.classList.remove('hidden');
+            // Force reflow for CSS transition
+            void aiModal.offsetWidth;
+            aiModal.classList.remove('opacity-0');
+            document.getElementById('ai-modal-content')?.classList.remove('scale-95');
+        };
+
+        const closeAiModal = () => {
+            aiModal.classList.add('opacity-0');
+            document.getElementById('ai-modal-content')?.classList.add('scale-95');
+            setTimeout(() => {
+                aiModal.classList.add('hidden');
+            }, 300); // match transition-duration duration-300
+        };
+
+        btnAiPopup.addEventListener('click', openAiModal);
+        btnCloseAi.addEventListener('click', closeAiModal);
+        
+        // Close on clicking backdrop
+        aiModal.addEventListener('click', (e) => {
+            if (e.target === aiModal) closeAiModal();
+        });
+
+        // Listen for AI content updates emitted by api.js
+        window.addEventListener('ai-updated', () => {
+            if (!aiModal.classList.contains('hidden')) {
+                refreshModalContent();
+            }
+        });
+
+        // Sync Modal selector changing
+        if (modalProfileSelector) {
+            modalProfileSelector.addEventListener('change', (e) => {
+                const profile = e.target.value;
+                if (state.userProfile === profile) return;
+                
+                state.userProfile = profile;
+                
+                // Keep the background UI selector up-to-date
+                if (mainProfileSelector) mainProfileSelector.value = profile;
+
+                // Provide instant loading state visually in the modal
+                aiModalBody.innerHTML = `
+                    <div class="flex flex-col items-center justify-center py-12">
+                        <svg class="animate-spin h-8 w-8 text-g-blue-medium mb-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                        <span class="text-g-blue-light text-xs font-medium tracking-wide">Synthesizing for ${profile}...</span>
+                    </div>
+                `;
+
+                analyzeAirWithGemini();
+            });
+        }
+    }
+}
+
 function initApp() {
     initCanvas();
     initMapModal();
+    initAiModal();
     initGlobalTooltip(); 
     startLiveClock(); 
     
@@ -161,25 +266,32 @@ function initApp() {
 
     performLocationSync().then(startAutoSync);
 
-    // Bind AI Profile Selector Buttons
-    const profileBtns = document.querySelectorAll('.profile-btn');
-    profileBtns.forEach(btn => {
-        btn.addEventListener('click', (e) => {
-            const profile = e.target.getAttribute('data-profile');
-            if (state.userProfile === profile) return; // Ignore if already selected
+    // Bind AI Profile Selector Dropdown
+    const profileSelector = document.getElementById('profile-selector');
+    if (profileSelector) {
+        profileSelector.addEventListener('change', (e) => {
+            const profile = e.target.value;
+            if (state.userProfile === profile) return;
             
             state.userProfile = profile;
             
-            // Toggle active classes for UI feedback (matching the tiny bento sizes)
-            profileBtns.forEach(b => {
-                b.className = 'profile-btn bg-white/5 text-g-grey-light border-white/10 hover:bg-white/10 px-2 py-0.5 rounded-full border text-[8px] font-semibold transition-colors';
-            });
-            e.target.className = 'profile-btn active bg-g-blue-medium text-white border-g-blue-medium px-2 py-0.5 rounded-full border text-[8px] font-semibold transition-colors shadow-sm';
+            // Sync the modal selector if it's rendered
+            const modalProfileSelector = document.getElementById('modal-profile-selector');
+            if (modalProfileSelector) modalProfileSelector.value = profile;
             
             // Re-fetch the Gemini evaluation with the newly selected profile
             analyzeAirWithGemini();
         });
-    });
+    }
+
+    // Bind Pollutant Selector Dropdown
+    const pollutantSelector = document.getElementById('pollutant-selector');
+    if (pollutantSelector) {
+        pollutantSelector.addEventListener('change', (e) => {
+            state.selectedPollutant = e.target.value;
+            renderPM25Sparkline(); // Re-renders chart with new pollutant
+        });
+    }
 
     const btnSync = document.getElementById('btn-sync-gps');
     if (btnSync) {
@@ -204,6 +316,56 @@ function initApp() {
             searchLocation(city, startAutoSync);
         });
     });
+
+    // Weather Forecast Toggles
+    const btn24h = document.getElementById('toggle-24h');
+    const btn5d = document.getElementById('toggle-5d');
+
+    if (btn24h && btn5d) {
+        btn24h.addEventListener('click', () => {
+            state.forecastMode = '24h';
+            state.selectedDayIndex = null; // Reset drill-down
+            btn24h.className = 'px-2.5 py-0.5 text-[8px] font-bold rounded-full bg-white shadow-sm text-g-black transition-all';
+            btn5d.className = 'px-2.5 py-0.5 text-[8px] font-bold rounded-full text-g-grey hover:text-g-black transition-all bg-transparent';
+            renderWeatherForecast();
+        });
+
+        btn5d.addEventListener('click', () => {
+            state.forecastMode = '5d';
+            state.selectedDayIndex = null; // Reset drill-down
+            btn5d.className = 'px-2.5 py-0.5 text-[8px] font-bold rounded-full bg-white shadow-sm text-g-black transition-all';
+            btn24h.className = 'px-2.5 py-0.5 text-[8px] font-bold rounded-full text-g-grey hover:text-g-black transition-all bg-transparent';
+            renderWeatherForecast();
+        });
+    }
+
+    const backBtn = document.getElementById('btn-forecast-back');
+    if (backBtn) {
+        backBtn.addEventListener('click', () => {
+            state.selectedDayIndex = null;
+            renderWeatherForecast();
+        });
+    }
+
+    // Chart Toggles
+    const togglePm25_24h = document.getElementById('pm25-toggle-24h');
+    const togglePm25_5d = document.getElementById('pm25-toggle-5d');
+
+    if (togglePm25_24h && togglePm25_5d) {
+        togglePm25_24h.addEventListener('click', () => {
+            state.pm25ForecastMode = '24h';
+            togglePm25_24h.className = 'px-2 py-0.5 text-[8px] font-bold rounded-full bg-white shadow-sm text-g-black transition-all';
+            togglePm25_5d.className = 'px-2 py-0.5 text-[8px] font-bold rounded-full text-g-grey hover:text-g-black transition-all bg-transparent';
+            renderPM25Sparkline();
+        });
+
+        togglePm25_5d.addEventListener('click', () => {
+            state.pm25ForecastMode = '5d';
+            togglePm25_5d.className = 'px-2 py-0.5 text-[8px] font-bold rounded-full bg-white shadow-sm text-g-black transition-all';
+            togglePm25_24h.className = 'px-2 py-0.5 text-[8px] font-bold rounded-full text-g-grey hover:text-g-black transition-all bg-transparent';
+            renderPM25Sparkline();
+        });
+    }
 }
 
 window.addEventListener('DOMContentLoaded', initApp);
