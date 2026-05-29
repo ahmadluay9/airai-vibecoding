@@ -1,371 +1,428 @@
 import { state } from './state.js';
 import { initCanvas } from './canvas.js';
-import { performLocationSync, fetchLocationName, fetchRealAirData, analyzeAirWithGemini, searchLocation } from './api.js';
-import { initGlobalTooltip } from './utils.js';
-import { renderPM25Sparkline, renderWeatherForecast } from './ui.js';
+import { initGlobalTooltip, convertHTMLTooltips, getEl } from './utils.js';
+import { 
+    performLocationSync, 
+    analyzeAirWithGemini, 
+    searchLocation, 
+    fetchRealAirData, 
+    fetchLocationName, 
+    replayTTS 
+} from './api.js';
+import { renderWeatherForecast, renderPM25Sparkline } from './ui.js';
 
-const startAutoSync = () => {
-    if (state.syncIntervalId) clearInterval(state.syncIntervalId);
-    state.syncIntervalId = setInterval(async () => {
-        await fetchRealAirData(state.currentLat, state.currentLon);
-        analyzeAirWithGemini(); // FIXED: Force AI advisory to regenerate with the newly synced data
-    }, 15 * 60 * 1000); 
-};
-
-// Starts a live ticking clock that matches the timezone of the searched location
-function startLiveClock() {
-    setInterval(() => {
-        const clockEl = document.getElementById('local-time');
-        if (!clockEl) return;
-        
-        const now = new Date();
-        const dateOpts = { month: 'short', day: 'numeric', year: 'numeric' };
-        // Enforce 24-hour format with colons for strict readability
-        const timeOpts = { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' };
-        
-        if (state.isTimezoneSet) {
-            // FIXED: Safely calculate target local time by mapping to UTC, bypassing the browser's local DST rules
-            const targetTime = new Date(now.getTime() + (state.currentTimezoneOffset * 1000));
-            dateOpts.timeZone = 'UTC';
-            timeOpts.timeZone = 'UTC';
-            
-            const dateStr = targetTime.toLocaleDateString('en-US', dateOpts);
-            const timeStr = targetTime.toLocaleTimeString('en-US', timeOpts);
-            clockEl.innerHTML = `<span>${dateStr}</span><span>${timeStr}</span>`;
-        } else {
-            const dateStr = now.toLocaleDateString('en-US', dateOpts);
-            const timeStr = now.toLocaleTimeString('en-US', timeOpts);
-            clockEl.innerHTML = `<span>${dateStr}</span><span>${timeStr}</span>`;
-        }
-    }, 1000);
+// Helper to calculate general wind directions from degrees
+function getWindDirection(deg) {
+    const compassDirs = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'];
+    return compassDirs[Math.round(deg / 45) % 8];
 }
 
-function initMapModal() {
-    const modal = document.getElementById('map-modal');
-    const openBtn = document.getElementById('btn-map-toggle');
-    const closeBtn = document.getElementById('btn-close-map');
-    const cancelBtn = document.getElementById('btn-cancel-map');
-    const confirmBtn = document.getElementById('btn-confirm-map');
-    
-    let map, marker;
-    let tempLat = state.currentLat, tempLon = state.currentLon;
+// Global auto-sync timer
+function startAutoSync() {
+    if (state.syncIntervalId) clearInterval(state.syncIntervalId);
+    state.syncIntervalId = setInterval(() => {
+        performLocationSync();
+    }, 300000); // Trigger reload every 5 minutes
+}
 
-    const openModal = () => {
-        if (modal) modal.classList.remove('hidden');
-        setTimeout(() => {
-            if(!map) {
-                if (typeof L === 'undefined') return;
-                
-                // Inject custom style to shrink leaflet attribution and avoid overlap
-                if (!document.getElementById('leaflet-custom-style')) {
-                    const style = document.createElement('style');
-                    style.id = 'leaflet-custom-style';
-                    style.innerHTML = '.leaflet-control-attribution { font-size: 7px !important; background: rgba(255,255,255,0.5) !important; backdrop-filter: blur(2px); line-height: 1.2 !important; padding: 0 4px !important; border-top-left-radius: 4px; }';
-                    document.head.appendChild(style);
-                }
-                
-                // Initialize main leaflet map
-                map = L.map('map-view').setView([state.currentLat, state.currentLon], 10);
-                
-                // 1. Street Base Layer (Neutral light theme so the heatmap colors pop)
-                L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
-                    attribution: '&copy; OpenStreetMap contributors &copy; CARTO'
-                }).addTo(map);
-                
-                // 2. AQI Pollution Heatmap Overlay (USEPA Standard tiles)
-                const pollutionOverlay = L.tileLayer('https://tiles.waqi.info/tiles/usepa-aqi/{z}/{x}/{y}.png?token=demo', {
-                    attribution: 'Air Quality Tiles &copy; <a href="https://waqi.info" target="_blank">WAQI</a>',
-                    opacity: 0.65,
-                    zIndex: 100
-                }).addTo(map);
-                
-                // 3. Compact & Translucent Color Legend
-                const legend = L.control({ position: 'bottomleft' });
-                legend.onAdd = function() {
-                    const div = L.DomUtil.create('div', 'info legend p-1 bg-white/30 hover:bg-white/95 transition-all duration-300 backdrop-blur-sm rounded-md text-[7px] text-g-black font-medium border border-white/40 flex flex-col gap-0.5 shadow-sm mb-5 ml-1 cursor-default pointer-events-auto');
-                    div.innerHTML = `
-                        <div class="text-[6px] font-bold uppercase text-g-grey-dark tracking-wider mb-0.5">AQI Legend</div>
-                        <div class="flex items-center gap-1.5"><span class="w-1.5 h-1.5 rounded-full shrink-0" style="background:#009966"></span><span class="leading-none">Good (0-50)</span></div>
-                        <div class="flex items-center gap-1.5"><span class="w-1.5 h-1.5 rounded-full shrink-0" style="background:#ffde33"></span><span class="leading-none">Mod. (51-100)</span></div>
-                        <div class="flex items-center gap-1.5"><span class="w-1.5 h-1.5 rounded-full shrink-0" style="background:#ff9933"></span><span class="leading-none">Unhealthy Sens. (101-150)</span></div>
-                        <div class="flex items-center gap-1.5"><span class="w-1.5 h-1.5 rounded-full shrink-0" style="background:#cc0033"></span><span class="leading-none">Unhealthy (151-200)</span></div>
-                        <div class="flex items-center gap-1.5"><span class="w-1.5 h-1.5 rounded-full shrink-0" style="background:#660099"></span><span class="leading-none">V. Unhealthy (201-300)</span></div>
-                        <div class="flex items-center gap-1.5"><span class="w-1.5 h-1.5 rounded-full shrink-0" style="background:#7e0023"></span><span class="leading-none">Hazardous (300+)</span></div>
-                    `;
-                    return div;
-                };
-                legend.addTo(map);
+// Global Clock function to update time dynamically based on the searched timezone
+function updateClock() {
+    const timeEl = getEl('local-time');
+    if (!timeEl) return;
 
-                marker = L.marker([state.currentLat, state.currentLon]).addTo(map);
-                
-                map.on('click', (e) => {
-                    tempLat = e.latlng.lat;
-                    tempLon = e.latlng.lng;
-                    marker.setLatLng([tempLat, tempLon]);
-                    if (confirmBtn) {
-                        confirmBtn.disabled = false;
-                        confirmBtn.classList.remove('opacity-0', 'pointer-events-none');
-                    }
-                });
-            } else {
-                map.invalidateSize();
-                map.setView([state.currentLat, state.currentLon], 10);
-                marker.setLatLng([state.currentLat, state.currentLon]);
-                if (confirmBtn) {
-                    confirmBtn.disabled = true;
-                    confirmBtn.classList.add('opacity-0', 'pointer-events-none');
-                }
-            }
-        }, 100);
-    };
+    const now = new Date();
+    let targetDate = now;
 
-    const closeModal = () => {
-        if (modal) modal.classList.add('hidden');
-    };
+    // Adjust the clock if we have fetched timezone offset data for the active city
+    if (state.isTimezoneSet && state.currentTimezoneOffset !== undefined) {
+        const utcTime = now.getTime() + (now.getTimezoneOffset() * 60000);
+        targetDate = new Date(utcTime + (state.currentTimezoneOffset * 1000));
+    }
 
-    if (openBtn) openBtn.addEventListener('click', openModal);
-    if (closeBtn) closeBtn.addEventListener('click', closeModal);
-    if (cancelBtn) cancelBtn.addEventListener('click', closeModal);
-    
-    if (confirmBtn) {
-        confirmBtn.addEventListener('click', async () => {
-            state.currentLat = tempLat;
-            state.currentLon = tempLon;
-            
-            // Hide selection button
-            confirmBtn.disabled = true;
-            confirmBtn.classList.add('opacity-0', 'pointer-events-none');
-            
-            const locName = document.getElementById('location-name');
-            if (locName) locName.innerText = "Locating on Map...";
-            if (locName) locName.innerText = await fetchLocationName(tempLat, tempLon);
-            await fetchRealAirData(tempLat, tempLon);
-            analyzeAirWithGemini();
-        });
+    const dateOptions = { month: 'short', day: 'numeric', year: 'numeric' };
+    const timeOptions = { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' };
+
+    const dateStr = targetDate.toLocaleDateString('en-US', dateOptions);
+    const timeStr = targetDate.toLocaleTimeString('en-US', timeOptions);
+
+    // Creates the split layout (Date on left, Time on right) matching the flexbox parent
+    timeEl.innerHTML = `<span>${dateStr}</span><span>${timeStr}</span>`;
+}
+
+// Update primary current weather cards
+export function updateWeatherUI(weatherData) {
+    if (!weatherData) return;
+
+    // Render basic current weather parameters
+    const temp = Math.round(weatherData.current.temp);
+    const weatherDesc = weatherData.current.weather[0].description;
+    const formattedDesc = weatherDesc.charAt(0).toUpperCase() + weatherDesc.slice(1);
+    const headerWeather = getEl('header-weather');
+    if (headerWeather) {
+        headerWeather.innerHTML = `
+            <img src="https://openweathermap.org/img/wn/${weatherData.current.weather[0].icon}.png" class="w-6 h-6 object-contain inline-block" alt="${weatherDesc}" />
+            ${temp}°C &nbsp;|&nbsp; ${formattedDesc}
+        `;
+    }
+
+    const envWind = getEl('env-wind');
+    if (envWind) {
+        const deg = weatherData.current.wind_deg || 0;
+        const speed = weatherData.current.wind_speed || 0;
+        const dir = getWindDirection(deg);
+        envWind.className = 'text-sm font-bold text-g-black leading-none cursor-help border-b border-dashed border-g-grey/20 pb-px';
+        envWind.innerText = `${dir} ${speed.toFixed(1)} m/s`;
+    }
+
+    const envHumidity = getEl('env-humidity');
+    if (envHumidity) {
+        envHumidity.className = 'text-sm font-bold text-g-black leading-none cursor-help border-b border-dashed border-g-grey/20 pb-px';
+        envHumidity.innerText = `${weatherData.current.humidity || 0}%`;
+    }
+
+    // Dynamic UV Index styling utilizing standardized text-sm font classes
+    const envUv = getEl('env-uv');
+    if (envUv) {
+        const uvi = weatherData.current.uvi || 0;
+        let uvClass = 'text-g-green-medium';
+        if (uvi >= 8) uvClass = 'text-g-red';
+        else if (uvi >= 6) uvClass = 'text-g-orange';
+        else if (uvi >= 3) uvClass = 'text-g-yellow';
+        
+        envUv.className = `text-sm font-bold ${uvClass} leading-none cursor-help border-b border-dashed border-g-grey/20 pb-px`;
+        envUv.innerText = Math.round(uvi);
+    }
+
+    // Dynamic Feels Like styling utilizing standardized text-sm font classes
+    const envFeelsLike = getEl('env-feels-like');
+    if (envFeelsLike) {
+        const feelsLike = weatherData.current.feels_like || 0;
+        envFeelsLike.className = 'text-sm font-bold text-g-black leading-none cursor-help border-b border-dashed border-g-grey/20 pb-px';
+        envFeelsLike.innerText = `${Math.round(feelsLike)}°C`;
+    }
+
+    const envPressure = getEl('env-pressure');
+    if (envPressure) {
+        envPressure.className = 'text-sm font-bold text-g-black leading-none cursor-help border-b border-dashed border-g-grey/20 pb-px';
+        envPressure.innerText = `${weatherData.current.pressure || 0} hPa`;
+    }
+
+    const envVisibility = getEl('env-visibility');
+    if (envVisibility) {
+        const visKm = (weatherData.current.visibility || 0) / 1000;
+        envVisibility.className = 'text-sm font-bold text-g-black leading-none cursor-help border-b border-dashed border-g-grey/20 pb-px';
+        envVisibility.innerText = `${visKm.toFixed(1)} km`;
+    }
+
+    // Process Sunrise & Sunset Time correctly
+    const envSunrise = getEl('env-sunrise');
+    const envSunset = getEl('env-sunset');
+    if (envSunrise && envSunset) {
+        let sunriseLocal = new Date((weatherData.current.sunrise || 0) * 1000);
+        let sunsetLocal = new Date((weatherData.current.sunset || 0) * 1000);
+
+        if (state.isTimezoneSet) {
+            const utcSunrise = sunriseLocal.getTime() + (sunriseLocal.getTimezoneOffset() * 60000);
+            sunriseLocal = new Date(utcSunrise + (state.currentTimezoneOffset * 1000));
+
+            const utcSunset = sunsetLocal.getTime() + (sunsetLocal.getTimezoneOffset() * 60000);
+            sunsetLocal = new Date(utcSunset + (state.currentTimezoneOffset * 1000));
+        }
+
+        envSunrise.className = 'text-sm font-bold text-g-black leading-none cursor-help border-b border-dashed border-g-grey/20 pb-px';
+        envSunset.className = 'text-sm font-bold text-g-black leading-none cursor-help border-b border-dashed border-g-grey/20 pb-px';
+        envSunrise.innerText = sunriseLocal.toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit' });
+        envSunset.innerText = sunsetLocal.toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit' });
     }
 }
 
-function initAiModal() {
-    const aiModal = document.getElementById('ai-modal');
-    const btnAiPopup = document.getElementById('btn-ai-popup');
-    const btnCloseAi = document.getElementById('btn-close-ai');
-    const aiModalBody = document.getElementById('ai-modal-body');
-    const modalProfileSelector = document.getElementById('modal-profile-selector');
-    const mainProfileSelector = document.getElementById('profile-selector');
+// Leaflet Inline Map Initialization (exposed to window so api.js can update it on search)
+function initMap() {
+    const mapContainer = getEl('map-view');
+    if (mapContainer && !window.mainMap) {
+        // Use current coordinates for mapping target
+        window.mainMap = L.map('map-view', {
+            zoomControl: true
+        }).setView([state.currentLat, state.currentLon], 10);
 
-    if (btnAiPopup && aiModal && btnCloseAi && aiModalBody) {
-        const refreshModalContent = () => {
-            const digestHtml = document.getElementById('ai-digest')?.innerHTML || '';
-            const personalizedHtml = document.getElementById('ai-personalized')?.innerHTML || '';
-            const profileName = mainProfileSelector?.value || 'General';
-            const isPersonalizedHidden = document.getElementById('personalized-block')?.classList.contains('hidden');
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; OpenStreetMap contributors'
+        }).addTo(window.mainMap);
 
-            let modalHtml = `
-                <div class="bg-white/5 border border-white/10 rounded-xl p-4 sm:p-5">
-                    <h3 class="text-[10px] font-bold text-g-blue-medium tracking-widest uppercase mb-2">Safety Digest</h3>
-                    <div class="text-g-grey-light text-xs sm:text-sm leading-relaxed font-medium">${digestHtml}</div>
-                </div>
-            `;
+        window.mainMarker = L.marker([state.currentLat, state.currentLon]).addTo(window.mainMap);
 
-            if (!isPersonalizedHidden && personalizedHtml) {
-                modalHtml += `
-                    <div class="bg-g-blue-medium/10 border border-g-blue-medium/20 rounded-xl p-4 sm:p-5">
-                        <h3 class="text-xs sm:text-sm font-bold text-white mb-2 flex items-center gap-1.5">
-                            <span class="text-g-blue-light text-base leading-none">🎯</span> Guidance for ${profileName}
-                        </h3>
-                        <div class="text-xs sm:text-sm text-g-grey-light leading-relaxed">${personalizedHtml}</div>
-                    </div>
-                `;
-            }
+        window.mainMap.on('click', (e) => {
+            const { lat, lng } = e.latlng;
+            window.mainMarker.setLatLng([lat, lng]);
+            state.currentLat = lat;
+            state.currentLon = lng;
+            getEl('btn-confirm-map').disabled = false;
+        });
 
-            aiModalBody.innerHTML = modalHtml;
+        // Handle selected location confirmation
+        getEl('btn-confirm-map').addEventListener('click', async () => {
+            getEl('btn-confirm-map').disabled = true;
+            const locNameEl = getEl('location-name');
+            if (locNameEl) locNameEl.innerText = "Fetching selected location...";
+            const displayName = await fetchLocationName(state.currentLat, state.currentLon);
+            if (locNameEl) locNameEl.innerText = displayName;
             
-            if (modalProfileSelector && modalProfileSelector.value !== profileName) {
-                modalProfileSelector.value = profileName;
+            if (window.popupMap && window.popupMarker) {
+                window.popupMap.setView([state.currentLat, state.currentLon], 10);
+                window.popupMarker.setLatLng([state.currentLat, state.currentLon]);
             }
-        };
-
-        const openAiModal = () => {
-            refreshModalContent();
             
-            aiModal.classList.remove('hidden');
-            // Force reflow for CSS transition
-            void aiModal.offsetWidth;
-            aiModal.classList.remove('opacity-0');
-            document.getElementById('ai-modal-content')?.classList.remove('scale-95');
-        };
+            await fetchRealAirData(state.currentLat, state.currentLon);
+            analyzeAirWithGemini();
+        });
+    }
 
-        const closeAiModal = () => {
-            aiModal.classList.add('opacity-0');
-            document.getElementById('ai-modal-content')?.classList.add('scale-95');
-            setTimeout(() => {
-                aiModal.classList.add('hidden');
-            }, 300); // match transition-duration duration-300
-        };
+    const popupMapContainer = getEl('popup-map-view');
+    if (popupMapContainer && !window.popupMap) {
+        window.popupMap = L.map('popup-map-view', {
+            zoomControl: true
+        }).setView([state.currentLat, state.currentLon], 10);
 
-        btnAiPopup.addEventListener('click', openAiModal);
-        btnCloseAi.addEventListener('click', closeAiModal);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; OpenStreetMap contributors'
+        }).addTo(window.popupMap);
+
+        window.popupMarker = L.marker([state.currentLat, state.currentLon]).addTo(window.popupMap);
+
+        window.popupMap.on('click', (e) => {
+            const { lat, lng } = e.latlng;
+            window.popupMarker.setLatLng([lat, lng]);
+            state.currentLat = lat;
+            state.currentLon = lng;
+            getEl('btn-confirm-popup-map').disabled = false;
+        });
+
+        getEl('btn-confirm-popup-map').addEventListener('click', async () => {
+            getEl('btn-confirm-popup-map').disabled = true;
+            const locNameEl = getEl('location-name');
+            if (locNameEl) locNameEl.innerText = "Fetching selected location...";
+            const displayName = await fetchLocationName(state.currentLat, state.currentLon);
+            if (locNameEl) locNameEl.innerText = displayName;
+            
+            // Keep main map in sync
+            if (window.mainMap && window.mainMarker) {
+                window.mainMap.setView([state.currentLat, state.currentLon], 10);
+                window.mainMarker.setLatLng([state.currentLat, state.currentLon]);
+            }
+            
+            getEl('btn-close-map-popup')?.click(); // Auto-close modal
+            await fetchRealAirData(state.currentLat, state.currentLon);
+            analyzeAirWithGemini();
+        });
         
-        // Close on clicking backdrop
-        aiModal.addEventListener('click', (e) => {
-            if (e.target === aiModal) closeAiModal();
-        });
-
-        // Listen for AI content updates emitted by api.js
-        window.addEventListener('ai-updated', () => {
-            if (!aiModal.classList.contains('hidden')) {
-                refreshModalContent();
-            }
-        });
-
-        // Sync Modal selector changing
-        if (modalProfileSelector) {
-            modalProfileSelector.addEventListener('change', (e) => {
-                const profile = e.target.value;
-                if (state.userProfile === profile) return;
-                
-                state.userProfile = profile;
-                
-                // Keep the background UI selector up-to-date
-                if (mainProfileSelector) mainProfileSelector.value = profile;
-
-                // Provide instant loading state visually in the modal
-                aiModalBody.innerHTML = `
-                    <div class="flex flex-col items-center justify-center py-12">
-                        <svg class="animate-spin h-8 w-8 text-g-blue-medium mb-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
-                        <span class="text-g-blue-light text-xs font-medium tracking-wide">Synthesizing for ${profile}...</span>
-                    </div>
-                `;
-
-                analyzeAirWithGemini();
+        // Listen to map popup input separately if needed
+        const popupLocationInput = getEl('popup-location-input');
+        if (popupLocationInput) {
+            popupLocationInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    searchLocation(popupLocationInput.value, () => {});
+                }
             });
         }
     }
 }
 
-function initApp() {
-    initCanvas();
-    initMapModal();
-    initAiModal();
-    initGlobalTooltip(); 
-    startLiveClock(); 
-    
-    const mapToggle = document.getElementById('btn-map-toggle');
-    
-    // Initial map load trigger
-    setTimeout(() => { if (mapToggle) mapToggle.click(); }, 800);
-    
-    // Observe live GPS coordinate changes to actively re-center the widget map
-    const latEl = document.getElementById('geo-lat');
-    if (latEl) {
-        const observer = new MutationObserver(() => {
-            if (mapToggle) mapToggle.click();
+// Setup Popups and AI Cognitive Report Modals
+function initModals() {
+    const aiPopupBtn = getEl('btn-ai-popup');
+    const aiModal = getEl('ai-modal');
+    const aiModalContent = getEl('ai-modal-content');
+    const closeAiBtn = getEl('btn-close-ai');
+
+    if (aiPopupBtn && aiModal) {
+        aiPopupBtn.addEventListener('click', () => {
+            const digestCard = getEl('ai-digest')?.parentElement;
+            const personalizedCard = getEl('personalized-block');
+            const modalBody = getEl('ai-modal-body');
+
+            if (modalBody) {
+                modalBody.innerHTML = '';
+                if (digestCard) {
+                    const cloneDigest = digestCard.cloneNode(true);
+                    cloneDigest.className = "bg-white/5 border border-[#3c4043] rounded-xl p-4";
+                    modalBody.appendChild(cloneDigest);
+                }
+                if (personalizedCard && !personalizedCard.classList.contains('hidden')) {
+                    const clonePersonalized = personalizedCard.cloneNode(true);
+                    clonePersonalized.classList.remove('hidden');
+                    clonePersonalized.className = "bg-g-blue-medium/10 border border-[#3c4043] rounded-xl p-4 mt-4";
+                    modalBody.appendChild(clonePersonalized);
+                }
+            }
+
+            aiModal.classList.remove('hidden');
+            setTimeout(() => {
+                aiModal.style.opacity = '1';
+                if (aiModalContent) aiModalContent.style.transform = 'scale(1)';
+            }, 50);
         });
-        observer.observe(latEl, { childList: true, characterData: true, subtree: true });
     }
 
-    performLocationSync().then(startAutoSync);
+    if (closeAiBtn && aiModal) {
+        closeAiBtn.addEventListener('click', () => {
+            aiModal.style.opacity = '0';
+            if (aiModalContent) aiModalContent.style.transform = 'scale(0.95)';
+            setTimeout(() => {
+                aiModal.classList.add('hidden');
+            }, 300);
+        });
+    }
 
-    // Bind AI Profile Selector Dropdown
-    const profileSelector = document.getElementById('profile-selector');
+    // Map Popup Modal
+    const mapPopupBtn = getEl('btn-map-popup');
+    const mapPopupModal = getEl('map-popup-modal');
+    const closeMapPopupBtn = getEl('btn-close-map-popup');
+
+    if (mapPopupBtn && mapPopupModal) {
+        mapPopupBtn.addEventListener('click', () => {
+            mapPopupModal.classList.remove('hidden');
+            setTimeout(() => {
+                mapPopupModal.style.opacity = '1';
+                getEl('map-popup-content').style.transform = 'scale(1)';
+            }, 50);
+            // Invalidate/Re-render map layout sizing in modal view
+            setTimeout(() => {
+                if (window.popupMap) {
+                    window.popupMap.invalidateSize();
+                }
+            }, 300);
+        });
+    }
+
+    if (closeMapPopupBtn && mapPopupModal) {
+        closeMapPopupBtn.addEventListener('click', () => {
+            mapPopupModal.style.opacity = '0';
+            getEl('map-popup-content').style.transform = 'scale(0.95)';
+            setTimeout(() => {
+                mapPopupModal.classList.add('hidden');
+            }, 300);
+        });
+    }
+}
+
+// Master Initialization Event on DOM Load
+window.addEventListener('DOMContentLoaded', () => {
+    initCanvas();
+    initGlobalTooltip();
+    convertHTMLTooltips();
+    initMap();
+    initModals();
+
+    // Setup and start real-time local clock loop
+    setInterval(updateClock, 1000);
+    updateClock(); // Call instantly so we don't wait 1 second for render
+
+    // Setup profile selectors
+    const profileSelector = getEl('profile-selector');
+    const modalProfileSelector = getEl('modal-profile-selector');
     if (profileSelector) {
         profileSelector.addEventListener('change', (e) => {
-            const profile = e.target.value;
-            if (state.userProfile === profile) return;
-            
-            state.userProfile = profile;
-            
-            // Sync the modal selector if it's rendered
-            const modalProfileSelector = document.getElementById('modal-profile-selector');
-            if (modalProfileSelector) modalProfileSelector.value = profile;
-            
-            // Re-fetch the Gemini evaluation with the newly selected profile
+            state.userProfile = e.target.value;
+            if (modalProfileSelector) modalProfileSelector.value = state.userProfile;
+            analyzeAirWithGemini();
+        });
+    }
+    if (modalProfileSelector) {
+        modalProfileSelector.addEventListener('change', (e) => {
+            state.userProfile = e.target.value;
+            if (profileSelector) profileSelector.value = state.userProfile;
             analyzeAirWithGemini();
         });
     }
 
-    // Bind Pollutant Selector Dropdown
-    const pollutantSelector = document.getElementById('pollutant-selector');
-    if (pollutantSelector) {
-        pollutantSelector.addEventListener('change', (e) => {
-            state.selectedPollutant = e.target.value;
-            renderPM25Sparkline(); // Re-renders chart with new pollutant
-        });
-    }
-
-    const btnSync = document.getElementById('btn-sync-gps');
-    if (btnSync) {
-        btnSync.addEventListener('click', () => {
-            performLocationSync().then(startAutoSync);
-        });
-    }
-    
-    const searchInput = document.getElementById('location-input');
+    // Setup search triggers
+    const searchInput = getEl('location-input');
     if (searchInput) {
         searchInput.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter' && searchInput.value.trim() !== '') {
+            if (e.key === 'Enter') {
                 searchLocation(searchInput.value, startAutoSync);
             }
         });
     }
 
-    document.querySelectorAll('.preset-btn').forEach(btn => {
-        btn.addEventListener('click', (e) => {
-            const city = e.target.innerText;
-            if (searchInput) searchInput.value = city;
-            searchLocation(city, startAutoSync);
+    const syncBtn = getEl('btn-sync-gps');
+    if (syncBtn) {
+        syncBtn.addEventListener('click', () => {
+            performLocationSync();
         });
-    });
+    }
 
     // Weather Forecast Toggles
-    const btn24h = document.getElementById('toggle-24h');
-    const btn5d = document.getElementById('toggle-5d');
+    const btn24h = getEl('toggle-24h');
+    const btn5d = getEl('toggle-5d');
+    const btnForecastBack = getEl('btn-forecast-back'); // The back button from drill-down
 
     if (btn24h && btn5d) {
         btn24h.addEventListener('click', () => {
             state.forecastMode = '24h';
             state.selectedDayIndex = null; // Reset drill-down
-            btn24h.className = 'px-2.5 py-0.5 text-[8px] font-bold rounded-full bg-white shadow-sm text-g-black transition-all';
-            btn5d.className = 'px-2.5 py-0.5 text-[8px] font-bold rounded-full text-g-grey hover:text-g-black transition-all bg-transparent';
+            btn24h.className = 'px-2.5 py-0.5 text-xs font-bold rounded-full bg-[#3c4043] shadow-sm text-white transition-all';
+            btn5d.className = 'px-2.5 py-0.5 text-xs font-bold rounded-full text-g-grey-dark hover:text-g-black transition-all bg-transparent';
             renderWeatherForecast();
         });
 
         btn5d.addEventListener('click', () => {
             state.forecastMode = '5d';
             state.selectedDayIndex = null; // Reset drill-down
-            btn5d.className = 'px-2.5 py-0.5 text-[8px] font-bold rounded-full bg-white shadow-sm text-g-black transition-all';
-            btn24h.className = 'px-2.5 py-0.5 text-[8px] font-bold rounded-full text-g-grey hover:text-g-black transition-all bg-transparent';
+            btn5d.className = 'px-2.5 py-0.5 text-xs font-bold rounded-full bg-[#3c4043] shadow-sm text-white transition-all';
+            btn24h.className = 'px-2.5 py-0.5 text-xs font-bold rounded-full text-g-grey-dark hover:text-g-black transition-all bg-transparent';
             renderWeatherForecast();
         });
     }
 
-    const backBtn = document.getElementById('btn-forecast-back');
-    if (backBtn) {
-        backBtn.addEventListener('click', () => {
-            state.selectedDayIndex = null;
-            renderWeatherForecast();
+    // Handle "Back" click from 5-day daily detail view
+    if (btnForecastBack) {
+        btnForecastBack.addEventListener('click', () => {
+            state.selectedDayIndex = null; // Clear the selected day
+            renderWeatherForecast();       // Re-render to show the 5-day overview
         });
     }
 
     // Chart Toggles
-    const togglePm25_24h = document.getElementById('pm25-toggle-24h');
-    const togglePm25_5d = document.getElementById('pm25-toggle-5d');
+    const togglePm25_24h = getEl('pm25-toggle-24h');
+    const togglePm25_5d = getEl('pm25-toggle-5d');
 
     if (togglePm25_24h && togglePm25_5d) {
         togglePm25_24h.addEventListener('click', () => {
             state.pm25ForecastMode = '24h';
-            togglePm25_24h.className = 'px-2 py-0.5 text-[8px] font-bold rounded-full bg-white shadow-sm text-g-black transition-all';
-            togglePm25_5d.className = 'px-2 py-0.5 text-[8px] font-bold rounded-full text-g-grey hover:text-g-black transition-all bg-transparent';
+            togglePm25_24h.className = 'px-2.5 py-0.5 text-xs font-bold rounded-full bg-[#3c4043] shadow-sm text-white transition-all';
+            togglePm25_5d.className = 'px-2.5 py-0.5 text-xs font-bold rounded-full text-g-grey-dark hover:text-g-black transition-all bg-transparent';
             renderPM25Sparkline();
         });
 
         togglePm25_5d.addEventListener('click', () => {
             state.pm25ForecastMode = '5d';
-            togglePm25_5d.className = 'px-2 py-0.5 text-[8px] font-bold rounded-full bg-white shadow-sm text-g-black transition-all';
-            togglePm25_24h.className = 'px-2 py-0.5 text-[8px] font-bold rounded-full text-g-grey hover:text-g-black transition-all bg-transparent';
+            togglePm25_5d.className = 'px-2.5 py-0.5 text-xs font-bold rounded-full bg-[#3c4043] shadow-sm text-white transition-all';
+            togglePm25_24h.className = 'px-2.5 py-0.5 text-xs font-bold rounded-full text-g-grey-dark hover:text-g-black transition-all bg-transparent';
             renderPM25Sparkline();
         });
     }
-}
 
-window.addEventListener('DOMContentLoaded', initApp);
+    // Pollutant Dropdown Selector
+    const pollutantSelector = getEl('pollutant-selector');
+    if (pollutantSelector) {
+        pollutantSelector.addEventListener('change', (e) => {
+            state.selectedPollutant = e.target.value;
+            renderPM25Sparkline();
+        });
+    }
+
+    // Setup TTS audio triggers
+    const playTtsBtn = getEl('btn-ai-play-tts');
+    const modalPlayTtsBtn = getEl('btn-modal-ai-play-tts');
+    if (playTtsBtn) {
+        playTtsBtn.addEventListener('click', replayTTS);
+    }
+    if (modalPlayTtsBtn) {
+        modalPlayTtsBtn.addEventListener('click', replayTTS);
+    }
+
+    // Perform initial boot location sync
+    performLocationSync();
+    startAutoSync();
+});

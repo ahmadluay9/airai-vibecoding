@@ -1,5 +1,16 @@
 import { state } from './state.js';
 
+// Robust element selector to handle dynamic class injections that corrupt IDs
+export const getEl = (id) => {
+    const el = document.getElementById(id);
+    if (el) return el;
+    try {
+        return document.querySelector(`[id^="${id}"]`);
+    } catch (e) {
+        return null;
+    }
+};
+
 export function getAQIColorAndLabel(aqi) {
     // Colors mapped exactly to Google News Custom Palette for International AQI (1-5)
     if (aqi === 1) return { 

@@ -1,14 +1,37 @@
 import { state } from './state.js';
 import { updateUI, drawSparkline, renderWeatherForecast, renderPM25Sparkline } from './ui.js';
-import { updateDateTime } from './utils.js';
+import { updateDateTime, getEl } from './utils.js';
+
+let lastSpokenText = "";
+let currentUtterance = null;
+
+// Custom Toast notification system replacing browser alert()
+function showToast(message, isError = true) {
+    let toast = getEl('app-toast');
+    if (!toast) {
+        toast = document.createElement('div');
+        toast.id = 'app-toast';
+        toast.className = 'fixed bottom-20 left-1/2 -translate-x-1/2 z-[9999] px-4 py-2 rounded-xl text-xs font-bold shadow-lg backdrop-blur-md transition-all duration-300 transform scale-90 opacity-0';
+        document.body.appendChild(toast);
+    }
+    toast.innerText = message;
+    if (isError) {
+        toast.className = 'fixed bottom-20 left-1/2 -translate-x-1/2 z-[9999] px-4 py-2 rounded-xl text-xs font-bold shadow-lg backdrop-blur-md transition-all duration-300 transform scale-100 opacity-100 bg-g-red-medium/90 text-white border border-g-red/20';
+    } else {
+        toast.className = 'fixed bottom-20 left-1/2 -translate-x-1/2 z-[9999] px-4 py-2 rounded-xl text-xs font-bold shadow-lg backdrop-blur-md transition-all duration-300 transform scale-100 opacity-100 bg-g-green-medium/90 text-white border border-g-green/20';
+    }
+    setTimeout(() => {
+        toast.className = 'fixed bottom-20 left-1/2 -translate-x-1/2 z-[9999] px-4 py-2 rounded-xl text-xs font-bold shadow-lg backdrop-blur-md transition-all duration-300 transform scale-90 opacity-0';
+    }, 3000);
+}
 
 // Helper to forcefully update the UI element directly during fetches
 function updateApiStatusUI(statusMsg) {
-    const apiStatusEl = document.getElementById('api-status');
+    const apiStatusEl = getEl('api-status');
     if (!apiStatusEl) return;
     
     if (statusMsg === 'Connected') {
-        apiStatusEl.innerHTML = `<span class="w-2 h-2 rounded-full bg-g-green-medium"></span> <span class="text-g-green-medium">Secure Connection</span>`;
+        apiStatusEl.innerHTML = `<span class="w-2 h-2 rounded-full bg-g-green"></span> <span class="text-g-green">Connected</span>`;
     } else {
         apiStatusEl.innerHTML = `<span class="w-2 h-2 rounded-full bg-g-yellow"></span> <span class="text-g-orange">${statusMsg}</span>`;
     }
@@ -19,9 +42,9 @@ function updateAiApiStatus(message, isError = false) {
     const selectors = ['profile-selector', 'modal-profile-selector'];
     
     selectors.forEach(selectorId => {
-        const selector = document.getElementById(selectorId);
+        const selector = getEl(selectorId);
         if (selector && selector.parentElement && selector.parentElement.parentNode) {
-            let statusEl = document.getElementById(`ai-api-status-banner-${selectorId}`);
+            let statusEl = getEl(`ai-api-status-banner-${selectorId}`);
             if (!statusEl) {
                 statusEl = document.createElement('div');
                 statusEl.id = `ai-api-status-banner-${selectorId}`;
@@ -36,6 +59,158 @@ function updateAiApiStatus(message, isError = false) {
             }
         }
     });
+}
+
+// Helper to dynamically update the application background based on current weather condition and time of day
+function updateDynamicBackground(condition, isDayTime) {
+    const bodyBg = getEl('body-bg');
+    if (!bodyBg) return;
+
+    const timePrefix = isDayTime ? 'day' : 'night';
+    let cond = 'clear';
+
+    const conditionLower = condition.toLowerCase();
+    if (conditionLower.includes('clear')) {
+        cond = 'clear';
+    } else if (
+        conditionLower.includes('cloud') || 
+        conditionLower.includes('mist') || 
+        conditionLower.includes('smoke') || 
+        conditionLower.includes('haze') || 
+        conditionLower.includes('dust') || 
+        conditionLower.includes('fog') || 
+        conditionLower.includes('sand') || 
+        conditionLower.includes('ash') || 
+        conditionLower.includes('squall') || 
+        conditionLower.includes('tornado')
+    ) {
+        cond = 'clouds';
+    } else if (conditionLower.includes('rain') || conditionLower.includes('drizzle')) {
+        cond = 'rain';
+    } else if (conditionLower.includes('thunderstorm') || conditionLower.includes('storm')) {
+        cond = 'storm';
+    } else if (conditionLower.includes('snow')) {
+        cond = 'snow';
+    }
+
+    const bgUrl = `src/assets/bg/${timePrefix}-${cond}.png`;
+    bodyBg.style.backgroundImage = `url('${bgUrl}')`;
+    bodyBg.style.backgroundSize = 'cover';
+    bodyBg.style.backgroundPosition = 'center';
+    bodyBg.style.backgroundRepeat = 'no-repeat';
+    bodyBg.style.transition = 'background-image 0.5s ease-in-out'; // Smooth fade transition
+}
+
+function resetPlayButtonUI() {
+    const buttons = [getEl('btn-ai-play-tts'), getEl('btn-modal-ai-play-tts')];
+    buttons.forEach(playButton => {
+        if (playButton) {
+            playButton.classList.remove('text-g-blue-medium', 'bg-white/10');
+            playButton.classList.add('text-g-grey', 'hover:text-white');
+            playButton.innerHTML = `
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M15.536 8.464a5 5 0 010 7.072M18.364 5.636a9 9 0 010 12.728M12 18.75V5.25L7.75 9.5H4.5v5h3.25L12 18.75z"></path>
+                </svg>
+            `;
+        }
+    });
+}
+
+export function replayTTS() {
+    // If browser is actively speaking, toggle pause / resume
+    if (window.speechSynthesis.speaking) {
+        if (window.speechSynthesis.paused) {
+            window.speechSynthesis.resume();
+            const buttons = [getEl('btn-ai-play-tts'), getEl('btn-modal-ai-play-tts')];
+            buttons.forEach(playButton => {
+                if (playButton) {
+                    playButton.innerHTML = `
+                        <svg class="w-4 h-4 animate-bounce text-g-blue-medium" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M15.536 8.464a5 5 0 010 7.072M18.364 5.636a9 9 0 010 12.728M12 18.75V5.25L7.75 9.5H4.5v5h3.25L12 18.75z"></path>
+                        </svg>
+                    `;
+                }
+            });
+        } else {
+            window.speechSynthesis.pause();
+            const buttons = [getEl('btn-ai-play-tts'), getEl('btn-modal-ai-play-tts')];
+            buttons.forEach(playButton => {
+                if (playButton) {
+                    playButton.innerHTML = `
+                        <svg class="w-4 h-4 text-g-grey" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M15.536 8.464a5 5 0 010 7.072M18.364 5.636a9 9 0 010 12.728M12 18.75V5.25L7.75 9.5H4.5v5h3.25L12 18.75z"></path>
+                        </svg>
+                    `;
+                }
+            });
+        }
+        return;
+    }
+    // Otherwise, replay the last generated advisory block
+    if (lastSpokenText) {
+        generateAndPlayTTS(lastSpokenText);
+    }
+}
+
+export async function generateAndPlayTTS(text) {
+    // Stop any ongoing browser speech synthesis
+    window.speechSynthesis.cancel();
+
+    if (!text || text.trim() === '') return;
+    lastSpokenText = text;
+
+    const buttons = [getEl('btn-ai-play-tts'), getEl('btn-modal-ai-play-tts')];
+    buttons.forEach(playButton => {
+        if (playButton) {
+            playButton.classList.remove('hidden');
+        }
+    });
+
+    try {
+        const utterance = new SpeechSynthesisUtterance(text);
+        currentUtterance = utterance;
+
+        // Find a natural English speaking voice (preferring Google / high-quality localized voices)
+        const voices = window.speechSynthesis.getVoices();
+        const idealVoice = voices.find(v => v.lang.startsWith('en-') && v.name.includes('Google')) || 
+                           voices.find(v => v.lang.startsWith('en-')) || 
+                           voices[0];
+        
+        if (idealVoice) {
+            utterance.voice = idealVoice;
+        }
+
+        utterance.rate = 1.0; // Natural pace
+        utterance.pitch = 1.0;
+
+        utterance.onstart = () => {
+            buttons.forEach(playButton => {
+                if (playButton) {
+                    playButton.classList.add('text-white', 'bg-white/10');
+                    playButton.innerHTML = `
+                        <svg class="w-4 h-4 animate-bounce text-g-blue-medium" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M15.536 8.464a5 5 0 010 7.072M18.364 5.636a9 9 0 010 12.728M12 18.75V5.25L7.75 9.5H4.5v5h3.25L12 18.75z"></path>
+                        </svg>
+                    `;
+                }
+            });
+        };
+
+        utterance.onend = () => {
+            resetPlayButtonUI();
+        };
+
+        utterance.onerror = (err) => {
+            console.error("Speech Synthesis Error:", err);
+            resetPlayButtonUI();
+        };
+
+        window.speechSynthesis.speak(utterance);
+
+    } catch (e) {
+        console.error("Browser TTS error:", e);
+        resetPlayButtonUI();
+    }
 }
 
 export async function fetchLocationName(lat, lon) {
@@ -109,7 +284,10 @@ export async function fetchRealAirData(lat, lon) {
         const iconCode = weatherData.weather[0].icon;
         state.isDayTime = iconCode.includes('d');
         
-        const headerWeather = document.getElementById('header-weather');
+        // Dynamically update the background according to weather and time prefix
+        updateDynamicBackground(condition, state.isDayTime);
+
+        const headerWeather = getEl('header-weather');
         if (headerWeather) {
             const iconUrl = `https://openweathermap.org/img/wn/${iconCode}@2x.png`;
             headerWeather.innerHTML = `<img src="${iconUrl}" alt="${condition}" class="w-6 h-6 inline-block object-contain drop-shadow-[0_2px_3px_rgba(0,0,0,0.4)] -mt-0.5 mr-1" /> ${Math.round(weatherData.main.temp)}°C <span class="mx-2 text-g-grey-light">|</span> ${weatherData.weather[0].description.toUpperCase()}`;
@@ -146,35 +324,35 @@ export async function fetchRealAirData(lat, lon) {
                 : 0; 
         }
 
-        const envWind = document.getElementById('env-wind');
+        const envWind = getEl('env-wind');
         if (envWind) {
             envWind.innerText = `${windDir} ${windSpeed.toFixed(1)} m/s`;
             let windLevel = windSpeed < 5 ? "light (0-5 m/s)" : (windSpeed <= 10 ? "moderate (5-10 m/s)" : "strong (>10 m/s)");
             envWind.setAttribute('data-js-tooltip', `Wind: ${windSpeed.toFixed(1)} m/s<br><span class='text-[10px] text-g-grey'>Level: ${windLevel}</span>`);
         }
         
-        const envHumidity = document.getElementById('env-humidity');
+        const envHumidity = getEl('env-humidity');
         if (envHumidity) {
             envHumidity.innerText = `${humidity}%`;
             let humLevel = humidity < 30 ? "dry (<30%)" : (humidity <= 50 ? "comfortable (30-50%)" : (humidity <= 70 ? "moderate (50-70%)" : "high (>70%)"));
             envHumidity.setAttribute('data-js-tooltip', `Humidity: ${humidity}%<br><span class='text-[10px] text-g-grey'>Level: ${humLevel}</span>`);
         }
         
-        const envFeelsLike = document.getElementById('env-feels-like');
+        const envFeelsLike = getEl('env-feels-like');
         if (envFeelsLike) {
             envFeelsLike.innerText = `${Math.round(feelsLike)}°C`;
             let tempLevel = feelsLike < 15 ? "cold (<15°C)" : (feelsLike <= 25 ? "comfortable (15-25°C)" : (feelsLike <= 32 ? "warm (25-32°C)" : "hot (>32°C)"));
             envFeelsLike.setAttribute('data-js-tooltip', `Feels Like: ${Math.round(feelsLike)}°C<br><span class='text-[10px] text-g-grey'>Level: ${tempLevel}</span>`);
         }
         
-        const envPressure = document.getElementById('env-pressure');
+        const envPressure = getEl('env-pressure');
         if (envPressure) {
             envPressure.innerText = `${pressure} hPa`;
             let pressLevel = pressure < 1000 ? "low (<1000 hPa)" : (pressure <= 1020 ? "normal (1000-1020 hPa)" : "high (>1020 hPa)");
             envPressure.setAttribute('data-js-tooltip', `Pressure: ${pressure} hPa<br><span class='text-[10px] text-g-grey'>Level: ${pressLevel}</span>`);
         }
         
-        const envVisibility = document.getElementById('env-visibility');
+        const envVisibility = getEl('env-visibility');
         if (envVisibility) {
             let visKm = visibility / 1000;
             envVisibility.innerText = `${visKm.toFixed(1)} km`;
@@ -182,7 +360,7 @@ export async function fetchRealAirData(lat, lon) {
             envVisibility.setAttribute('data-js-tooltip', `Visibility: ${visKm.toFixed(1)} km<br><span class='text-[10px] text-g-grey'>Level: ${visLevel}</span>`);
         }
 
-        const envSunrise = document.getElementById('env-sunrise');
+        const envSunrise = getEl('env-sunrise');
         if (envSunrise && sunrise) {
             let sunriseDate = new Date(sunrise * 1000);
             if (state.isTimezoneSet) {
@@ -193,7 +371,7 @@ export async function fetchRealAirData(lat, lon) {
             envSunrise.setAttribute('data-js-tooltip', `Sunrise Time<br><span class='text-[10px] text-g-grey'>Local timezone</span>`);
         }
 
-        const envSunset = document.getElementById('env-sunset');
+        const envSunset = getEl('env-sunset');
         if (envSunset && sunset) {
             let sunsetDate = new Date(sunset * 1000);
             if (state.isTimezoneSet) {
@@ -204,7 +382,7 @@ export async function fetchRealAirData(lat, lon) {
             envSunset.setAttribute('data-js-tooltip', `Sunset Time<br><span class='text-[10px] text-g-grey'>Local timezone</span>`);
         }
 
-        const envUv = document.getElementById('env-uv');
+        const envUv = getEl('env-uv');
         if (envUv) {
             envUv.innerText = uvIndex;
             envUv.className = `text-xs font-bold leading-none cursor-help border-b border-dashed border-g-grey/60 pb-px ${uvIndex >= 8 ? 'text-g-red-medium' : (uvIndex >= 5 ? 'text-g-orange' : 'text-g-black')}`;
@@ -220,7 +398,7 @@ export async function fetchRealAirData(lat, lon) {
     if (aqData && aqData.list && aqData.list.length > 0) {
         updateUI(aqData.list[0]);
         const localSyncTime = updateDateTime();
-        const headerSync = document.getElementById('header-sync');
+        const headerSync = getEl('header-sync');
         if (headerSync) {
             const dateOpts = { month: 'short', day: 'numeric', year: 'numeric' };
             const timeOpts = { hour12: false, hour: '2-digit', minute: '2-digit' }; 
@@ -338,24 +516,24 @@ export async function fetchRealAirData(lat, lon) {
 export async function analyzeAirWithGemini() {
     if (!state.latestAirQualityData) return;
     
-    const loading = document.getElementById('ai-loading');
-    const contentBlock = document.getElementById('ai-content-block');
+    const loading = getEl('ai-loading');
+    const contentBlock = getEl('ai-content-block');
     if (loading) loading.classList.remove('hidden');
     if (contentBlock) contentBlock.classList.add('hidden');
 
     const data = state.latestAirQualityData;
-    const locNameEl = document.getElementById('location-name');
+    const locNameEl = getEl('location-name');
     const locationText = locNameEl ? locNameEl.innerText : 'Unknown Location';
     const intlAqi = data.main.aqi;
     const comps = data.components;
     
     // Extract current UI values dynamically to align AI awareness with User View
-    const envWind = document.getElementById('env-wind')?.innerText || 'N/A';
-    const envHumidity = document.getElementById('env-humidity')?.innerText || 'N/A';
-    const envUv = document.getElementById('env-uv')?.innerText || 'N/A';
+    const envWind = getEl('env-wind')?.innerText || 'N/A';
+    const envHumidity = getEl('env-humidity')?.innerText || 'N/A';
+    const envUv = getEl('env-uv')?.innerText || 'N/A';
     
     let envTemp = 'N/A';
-    const headerWeatherEl = document.getElementById('header-weather');
+    const headerWeatherEl = getEl('header-weather');
     if (headerWeatherEl) {
         // Simple regex to extract just the temp text (e.g., "28°C | CLOUDS")
         envTemp = headerWeatherEl.innerText.trim();
@@ -469,14 +647,14 @@ export async function analyzeAirWithGemini() {
             updateAiApiStatus(null, false);
         }
 
-        const digestEl = document.getElementById('ai-digest');
+        const digestEl = getEl('ai-digest');
         if (digestEl) {
             digestEl.innerHTML = aiData.digest || 'Data processing error.';
         }
 
-        const personalizedBlock = document.getElementById('personalized-block');
-        const personalizedText = document.getElementById('ai-personalized');
-        const personalizedTitle = document.getElementById('personalized-title');
+        const personalizedBlock = getEl('personalized-block');
+        const personalizedText = getEl('ai-personalized');
+        const personalizedTitle = getEl('personalized-title');
         
         if (personalizedBlock && personalizedText && personalizedTitle) {
             if (state.userProfile !== 'General') {
@@ -509,6 +687,14 @@ export async function analyzeAirWithGemini() {
         if (loading) loading.classList.add('hidden');
         if (contentBlock) contentBlock.classList.remove('hidden');
         
+        // Compile the complete advisory text (strip HTML tags) and auto-play browser TTS read-out
+        let speakText = aiData.digest || '';
+        if (state.userProfile !== 'General' && aiData.personalizedAdvice) {
+            const cleanAdvice = aiData.personalizedAdvice.replace(/<\/?[^>]+(>|$)/g, "");
+            speakText += " " + cleanAdvice;
+        }
+        generateAndPlayTTS(speakText);
+
         // Notify the application that AI content has been successfully updated
         window.dispatchEvent(new Event('ai-updated'));
         
@@ -518,14 +704,14 @@ export async function analyzeAirWithGemini() {
         
         updateAiApiStatus(error.message, true);
 
-        const digestEl = document.getElementById('ai-digest');
+        const digestEl = getEl('ai-digest');
         if (digestEl) {
             digestEl.innerHTML = `AI Advisory is currently operating in manual observation mode. (Demo Mode)`;
         }
 
-        const personalizedBlock = document.getElementById('personalized-block');
-        const personalizedText = document.getElementById('ai-personalized');
-        const personalizedTitle = document.getElementById('personalized-title');
+        const personalizedBlock = getEl('personalized-block');
+        const personalizedText = getEl('ai-personalized');
+        const personalizedTitle = getEl('personalized-title');
 
         if (personalizedBlock && personalizedText && personalizedTitle) {
             if (state.userProfile !== 'General') {
@@ -543,7 +729,7 @@ export async function analyzeAirWithGemini() {
 }
 
 export async function performLocationSync() {
-    const locNameEl = document.getElementById('location-name');
+    const locNameEl = getEl('location-name');
     if (locNameEl) locNameEl.innerText = "Locating via GPS...";
     
     const getPos = () => new Promise((resolve, reject) => {
@@ -572,10 +758,10 @@ export async function performLocationSync() {
 }
 
 export async function searchLocation(query, syncCallback) {
-    const searchInput = document.getElementById('location-input');
+    const searchInput = getEl('location-input');
 
     if (!state.API_KEY || state.API_KEY === '') {
-        alert("An OpenWeather API Key is required to search locations.");
+        showToast("An OpenWeather API Key is required to search locations.", true);
         return;
     }
 
@@ -590,7 +776,7 @@ export async function searchLocation(query, syncCallback) {
             state.currentLon = parseFloat(data[0].lon);
             
             let displayName = `${data[0].name}${data[0].state ? ', ' + data[0].state : ''}`;
-            const locNameEl = document.getElementById('location-name');
+            const locNameEl = getEl('location-name');
             if (locNameEl) locNameEl.innerText = displayName;
 
             if (searchInput) searchInput.value = '';
@@ -603,6 +789,6 @@ export async function searchLocation(query, syncCallback) {
         }
     } catch (error) {
         console.error("Search Error:", error);
-        alert("Location not found. Please try a different search term.");
+        showToast("Location not found. Please try a different search term.", true);
     }
 }
