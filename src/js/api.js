@@ -101,6 +101,18 @@ function updateDynamicBackground(condition, isDayTime) {
     bodyBg.style.transition = 'background-image 0.5s ease-in-out'; // Smooth fade transition
 }
 
+// Helper to sync global map views to current state coordinates
+function syncMapsToCurrentState() {
+    if (window.mainMap && window.mainMarker) {
+        window.mainMap.setView([state.currentLat, state.currentLon], 10);
+        window.mainMarker.setLatLng([state.currentLat, state.currentLon]);
+    }
+    if (window.popupMap && window.popupMarker) {
+        window.popupMap.setView([state.currentLat, state.currentLon], 10);
+        window.popupMarker.setLatLng([state.currentLat, state.currentLon]);
+    }
+}
+
 function resetPlayButtonUI() {
     const buttons = [getEl('btn-ai-play-tts'), getEl('btn-modal-ai-play-tts')];
     buttons.forEach(playButton => {
@@ -753,6 +765,9 @@ export async function performLocationSync() {
         }
     }
 
+    // Auto-center the map interface to the synced location
+    syncMapsToCurrentState();
+
     await fetchRealAirData(state.currentLat, state.currentLon);
     analyzeAirWithGemini();
 }
@@ -774,6 +789,9 @@ export async function searchLocation(query, syncCallback) {
         if (data && data.length > 0) {
             state.currentLat = parseFloat(data[0].lat);
             state.currentLon = parseFloat(data[0].lon);
+            
+            // Auto-center the map interface to the newly searched location/preset
+            syncMapsToCurrentState();
             
             let displayName = `${data[0].name}${data[0].state ? ', ' + data[0].state : ''}`;
             const locNameEl = getEl('location-name');
