@@ -31,7 +31,7 @@ function updateApiStatusUI(statusMsg) {
     if (!apiStatusEl) return;
     
     if (statusMsg === 'Connected') {
-        apiStatusEl.innerHTML = `<span class="w-2 h-2 rounded-full bg-g-green"></span> <span class="text-g-green">Connected</span>`;
+        apiStatusEl.innerHTML = `<span class="w-2 h-2 rounded-full bg-g-green-medium"></span> <span class="text-g-green-medium drop-shadow-md">Connected</span>`;
     } else {
         apiStatusEl.innerHTML = `<span class="w-2 h-2 rounded-full bg-g-yellow"></span> <span class="text-g-orange">${statusMsg}</span>`;
     }
@@ -93,7 +93,7 @@ function updateDynamicBackground(condition, isDayTime) {
         cond = 'snow';
     }
 
-    const bgUrl = `src/assets/bg/${timePrefix}-${cond}.png`;
+    const bgUrl = `/assets/bg/${timePrefix}-${cond}.png`;
     bodyBg.style.backgroundImage = `url('${bgUrl}')`;
     bodyBg.style.backgroundSize = 'cover';
     bodyBg.style.backgroundPosition = 'center';
@@ -117,7 +117,7 @@ function resetPlayButtonUI() {
     const buttons = [getEl('btn-ai-play-tts'), getEl('btn-modal-ai-play-tts')];
     buttons.forEach(playButton => {
         if (playButton) {
-            playButton.classList.remove('text-g-blue-medium', 'bg-white/10');
+            playButton.classList.remove('text-g-blue-medium', 'bg-white/10', 'text-white');
             playButton.classList.add('text-g-grey', 'hover:text-white');
             playButton.innerHTML = `
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
@@ -129,36 +129,14 @@ function resetPlayButtonUI() {
 }
 
 export function replayTTS() {
-    // If browser is actively speaking, toggle pause / resume
+    // If browser is actively speaking, stop immediately when the user clicks the button
     if (window.speechSynthesis.speaking) {
-        if (window.speechSynthesis.paused) {
-            window.speechSynthesis.resume();
-            const buttons = [getEl('btn-ai-play-tts'), getEl('btn-modal-ai-play-tts')];
-            buttons.forEach(playButton => {
-                if (playButton) {
-                    playButton.innerHTML = `
-                        <svg class="w-4 h-4 animate-bounce text-g-blue-medium" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M15.536 8.464a5 5 0 010 7.072M18.364 5.636a9 9 0 010 12.728M12 18.75V5.25L7.75 9.5H4.5v5h3.25L12 18.75z"></path>
-                        </svg>
-                    `;
-                }
-            });
-        } else {
-            window.speechSynthesis.pause();
-            const buttons = [getEl('btn-ai-play-tts'), getEl('btn-modal-ai-play-tts')];
-            buttons.forEach(playButton => {
-                if (playButton) {
-                    playButton.innerHTML = `
-                        <svg class="w-4 h-4 text-g-grey" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M15.536 8.464a5 5 0 010 7.072M18.364 5.636a9 9 0 010 12.728M12 18.75V5.25L7.75 9.5H4.5v5h3.25L12 18.75z"></path>
-                        </svg>
-                    `;
-                }
-            });
-        }
+        window.speechSynthesis.cancel();
+        resetPlayButtonUI();
         return;
     }
-    // Otherwise, replay the last generated advisory block
+    
+    // When the user clicks the button, play only the latest response
     if (lastSpokenText) {
         generateAndPlayTTS(lastSpokenText);
     }
@@ -198,6 +176,7 @@ export async function generateAndPlayTTS(text) {
         utterance.onstart = () => {
             buttons.forEach(playButton => {
                 if (playButton) {
+                    playButton.classList.remove('text-g-grey');
                     playButton.classList.add('text-white', 'bg-white/10');
                     playButton.innerHTML = `
                         <svg class="w-4 h-4 animate-bounce text-g-blue-medium" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
@@ -530,8 +509,20 @@ export async function analyzeAirWithGemini() {
     
     const loading = getEl('ai-loading');
     const contentBlock = getEl('ai-content-block');
+    const modalBody = getEl('ai-modal-body');
+    const aiModal = getEl('ai-modal');
+
     if (loading) loading.classList.remove('hidden');
     if (contentBlock) contentBlock.classList.add('hidden');
+
+    if (modalBody && aiModal && !aiModal.classList.contains('hidden')) {
+        modalBody.innerHTML = `
+            <div class="flex flex-col items-center justify-center py-12 h-full opacity-80 mt-10">
+                <img src="https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/google-gemini.svg" alt="Gemini Loading" class="animate-spin h-8 w-8 object-contain mb-4" />
+                <span class="text-g-blue-light text-xs font-medium tracking-wide">Synthesizing advisory for ${state.userProfile}...</span>
+            </div>
+        `;
+    }
 
     const data = state.latestAirQualityData;
     const locNameEl = getEl('location-name');
@@ -671,23 +662,37 @@ export async function analyzeAirWithGemini() {
         if (personalizedBlock && personalizedText && personalizedTitle) {
             if (state.userProfile !== 'General') {
                 personalizedBlock.classList.remove('hidden');
-                personalizedTitle.innerText = `Guidance for ${state.userProfile}`;
                 
-                // Format the rich HTML output for the new AI parameters
-                let adviceHTML = `<p class="mb-2 leading-relaxed text-white font-medium">${aiData.personalizedAdvice || 'No targeted advice available at this time.'}</p>`;
+                const profileIcons = {
+                    'Children': 'children.png',
+                    'Asthma': 'asthma.png',
+                    'Seniors': 'old-person.png',
+                    'Athletes/Joggers': 'running.png',
+                    'Motorcyclist': 'motorcyclist.png',
+                    'Pregnant Women': 'pregnant.png'
+                };
+                const iconFile = profileIcons[state.userProfile];
+                const iconHtml = iconFile ? `<img src="/assets/icons/${iconFile}" class="w-6 h-6 object-contain bg-white/20 p-1 rounded-md shadow-[0_0_8px_rgba(255,255,255,0.4)] border border-white/30" alt="Icon" onerror="this.style.display='none'">` : '';
+
+                personalizedTitle.innerHTML = `${iconHtml} <span class="text-g-blue-medium">Guidance for ${state.userProfile}</span>`;
+                
+                // Format the rich HTML output for the new AI parameters with stacked block structure
+                let adviceHTML = `<p class="mb-3 leading-relaxed text-white font-medium">${aiData.personalizedAdvice || 'No targeted advice available at this time.'}</p>`;
+                
+                const sectionIconStyle = "w-6 h-6 object-contain bg-white/20 p-1 rounded-md shadow-[0_0_8px_rgba(255,255,255,0.4)] border border-white/30 shrink-0";
                 
                 if (aiData.pollutantContext) {
-                    adviceHTML += `<p class="mb-2 opacity-90"><strong class="text-g-blue-light">Primary Pollutant:</strong> ${aiData.pollutantContext}</p>`;
+                    adviceHTML += `<div class="mb-3"><div class="flex items-center gap-1.5 mb-1"><img src="/assets/icons/carbon-dioxide.png" class="${sectionIconStyle}" alt="Pollutant" onerror="this.style.display='none'"><strong class="text-g-blue-light">Primary Pollutant:</strong></div><p class="opacity-90 text-sm leading-relaxed">${aiData.pollutantContext}</p></div>`;
                 }
                 if (aiData.safeWindow) {
-                    adviceHTML += `<p class="mb-2 opacity-90"><strong class="text-g-green-light">Optimal Time Window:</strong> ${aiData.safeWindow}</p>`;
+                    adviceHTML += `<div class="mb-3"><div class="flex items-center gap-1.5 mb-1"><img src="/assets/icons/time-management.png" class="${sectionIconStyle}" alt="Time Window" onerror="this.style.display='none'"><strong class="text-g-green-light">Optimal Time Window:</strong></div><p class="opacity-90 text-sm leading-relaxed">${aiData.safeWindow}</p></div>`;
                 }
                 if (aiData.actionChecklist && aiData.actionChecklist.length > 0) {
-                    adviceHTML += `<p class="text-g-blue-light font-bold mt-3 mb-1">Recommended Actions:</p><ul class="list-disc pl-4 space-y-1 opacity-90 text-[9.5px]">`;
+                    adviceHTML += `<div class="mb-2"><div class="flex items-center gap-1.5 mt-3 mb-2"><img src="/assets/icons/task.png" class="${sectionIconStyle}" alt="Actions" onerror="this.style.display='none'"><strong class="text-g-blue-light">Recommended Actions:</strong></div><ul class="list-disc pl-5 space-y-1.5 opacity-90 text-sm leading-relaxed">`;
                     aiData.actionChecklist.forEach(action => {
                         adviceHTML += `<li>${action}</li>`;
                     });
-                    adviceHTML += `</ul>`;
+                    adviceHTML += `</ul></div>`;
                 }
                 
                 personalizedText.innerHTML = adviceHTML;
@@ -699,13 +704,37 @@ export async function analyzeAirWithGemini() {
         if (loading) loading.classList.add('hidden');
         if (contentBlock) contentBlock.classList.remove('hidden');
         
-        // Compile the complete advisory text (strip HTML tags) and auto-play browser TTS read-out
+        if (modalBody) {
+            modalBody.innerHTML = '';
+            const digestCard = getEl('ai-digest')?.parentElement;
+            const pCard = getEl('personalized-block');
+            
+            if (digestCard) {
+                const cloneDigest = digestCard.cloneNode(true);
+                cloneDigest.className = "bg-white/5 border border-[#3c4043] rounded-xl p-4";
+                modalBody.appendChild(cloneDigest);
+            }
+            if (pCard && !pCard.classList.contains('hidden')) {
+                const clonePersonalized = pCard.cloneNode(true);
+                clonePersonalized.classList.remove('hidden');
+                clonePersonalized.className = "bg-g-blue-medium/10 border border-[#3c4043] rounded-xl p-4 mt-4";
+                modalBody.appendChild(clonePersonalized);
+            }
+        }
+        
+        // Compile the complete advisory text (strip HTML tags) and prepare TTS for manual playback
         let speakText = aiData.digest || '';
         if (state.userProfile !== 'General' && aiData.personalizedAdvice) {
             const cleanAdvice = aiData.personalizedAdvice.replace(/<\/?[^>]+(>|$)/g, "");
             speakText += " " + cleanAdvice;
         }
-        generateAndPlayTTS(speakText);
+        
+        // Store text and reveal buttons without autoplaying
+        lastSpokenText = speakText;
+        const playButtons = [getEl('btn-ai-play-tts'), getEl('btn-modal-ai-play-tts')];
+        playButtons.forEach(btn => {
+            if (btn) btn.classList.remove('hidden');
+        });
 
         // Notify the application that AI content has been successfully updated
         window.dispatchEvent(new Event('ai-updated'));
@@ -728,10 +757,40 @@ export async function analyzeAirWithGemini() {
         if (personalizedBlock && personalizedText && personalizedTitle) {
             if (state.userProfile !== 'General') {
                 personalizedBlock.classList.remove('hidden');
-                personalizedTitle.innerText = `Guidance for ${state.userProfile}`;
+                
+                const profileIcons = {
+                    'Children': 'children.png',
+                    'Asthma': 'asthma.png',
+                    'Seniors': 'old-person.png',
+                    'Athletes/Joggers': 'running.png',
+                    'Motorcyclist': 'motorcyclist.png',
+                    'Pregnant Women': 'pregnant.png'
+                };
+                const iconFile = profileIcons[state.userProfile];
+                const iconHtml = iconFile ? `<img src="/assets/icons/${iconFile}" class="w-6 h-6 object-contain bg-white/20 p-1 rounded-md shadow-[0_0_8px_rgba(255,255,255,0.4)] border border-white/30" alt="Icon" onerror="this.style.display='none'">` : '';
+
+                personalizedTitle.innerHTML = `${iconHtml} <span class="text-g-blue-medium">Guidance for ${state.userProfile}</span>`;
                 personalizedText.innerHTML = `<strong>[Simulated Advisory]</strong> Ensure individuals in the <strong>${state.userProfile}</strong> category avoid prolonged outdoor exposure. Add a valid Gemini API key to generate live, context-aware analysis specific to this profile.`;
             } else {
                 personalizedBlock.classList.add('hidden');
+            }
+        }
+        
+        if (modalBody) {
+            modalBody.innerHTML = '';
+            const digestCard = getEl('ai-digest')?.parentElement;
+            const pCard = getEl('personalized-block');
+            
+            if (digestCard) {
+                const cloneDigest = digestCard.cloneNode(true);
+                cloneDigest.className = "bg-white/5 border border-[#3c4043] rounded-xl p-4";
+                modalBody.appendChild(cloneDigest);
+            }
+            if (pCard && !pCard.classList.contains('hidden')) {
+                const clonePersonalized = pCard.cloneNode(true);
+                clonePersonalized.classList.remove('hidden');
+                clonePersonalized.className = "bg-g-blue-medium/10 border border-[#3c4043] rounded-xl p-4 mt-4";
+                modalBody.appendChild(clonePersonalized);
             }
         }
         

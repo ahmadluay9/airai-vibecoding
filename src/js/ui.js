@@ -7,6 +7,29 @@ export function updateUI(data) {
     const aqi = data.main.aqi;
     const aqiInfo = getAQIColorAndLabel(aqi);
     
+    // Update Maps with Dynamic AQI Radial Heatmap
+    if (window.mainMap && state.currentLat) {
+        if (window.mainMapCircle) window.mainMapCircle.remove();
+        window.mainMapCircle = L.circle([state.currentLat, state.currentLon], {
+            color: aqiInfo.color,
+            fillColor: aqiInfo.color,
+            fillOpacity: 0.35,
+            weight: 2,
+            radius: 12000 // 12km radius visual
+        }).addTo(window.mainMap);
+    }
+    
+    if (window.popupMap && state.currentLat) {
+        if (window.popupMapCircle) window.popupMapCircle.remove();
+        window.popupMapCircle = L.circle([state.currentLat, state.currentLon], {
+            color: aqiInfo.color,
+            fillColor: aqiInfo.color,
+            fillOpacity: 0.35,
+            weight: 2,
+            radius: 20000 // 20km expanded radius visual
+        }).addTo(window.popupMap);
+    }
+
     // AQI Gauge (scale out of 5)
     const offset = 125.6 - (125.6 * Math.min(aqi, 5) / 5);
     const gaugePath = getEl('aqi-gauge-path');
@@ -474,7 +497,7 @@ export function renderWeatherForecast() {
         if (isDailySummary) {
             const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
             timeLabel = days[localTime.getDay()];
-            tempLabel = `${Math.round(item.temp.max)}°<span class="text-[#ffffff] font-normal ml-0.5 text-[8px]">${Math.round(item.temp.min)}°</span>`;
+            tempLabel = `${Math.round(item.temp.max)}°<span class="text-[#ffffff] font-normal ml-1 text-[10px]">${Math.round(item.temp.min)}°</span>`;
         } else {
             timeLabel = localTime.toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit' });
             tempLabel = `${Math.round(item.main.temp)}°`;
@@ -486,10 +509,10 @@ export function renderWeatherForecast() {
         const formattedDesc = weatherDesc.charAt(0).toUpperCase() + weatherDesc.slice(1);
 
         forecastHTML += `
-            <div data-weather-desc="${formattedDesc}" ${isDailySummary ? `data-day-index="${index}"` : ''} class="${isDailySummary ? 'forecast-day-btn cursor-pointer shadow-sm hover:-translate-y-0.5' : 'cursor-help'} flex flex-col items-center min-w-[65px] bg-transparent rounded-lg p-2 border border-g-grey-light/25 shrink-0 hover:bg-white/10 transition-all">
-                <span class="text-[9px] text-[#e6e6e6] pointer-events-none font-bold">${timeLabel}</span>
-                <img src="${fIconUrl}" alt="${weatherDesc}" class="w-8 h-8 object-contain drop-shadow-[0_2px_3px_rgba(0,0,0,0.35)] my-0.5 pointer-events-none" />
-                <span class="text-[10px] font-bold text-g-black pointer-events-none flex items-baseline">${tempLabel}</span>
+            <div data-weather-desc="${formattedDesc}" ${isDailySummary ? `data-day-index="${index}"` : ''} class="${isDailySummary ? 'forecast-day-btn cursor-pointer shadow-sm hover:-translate-y-0.5' : 'cursor-help'} flex flex-col items-center min-w-[85px] bg-transparent rounded-xl p-3 border border-g-grey-light/25 shrink-0 hover:bg-white/10 transition-all gap-1">
+                <span class="text-xs text-[#e6e6e6] pointer-events-none font-bold tracking-wide">${timeLabel}</span>
+                <img src="${fIconUrl}" alt="${weatherDesc}" class="w-10 h-10 object-contain drop-shadow-[0_2px_3px_rgba(0,0,0,0.35)] my-0.5 pointer-events-none" />
+                <span class="text-sm font-black text-g-black pointer-events-none flex items-baseline">${tempLabel}</span>
             </div>
         `;
     });

@@ -3,3 +3,7 @@
 node_modules
 .antigravitycli
 PROMPT.MD
+dist
+.git
+.DS_Store
+*.log

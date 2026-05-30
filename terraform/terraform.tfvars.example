@@ -1,0 +1,8 @@
+# Google Cloud Project Configuration
+project_id   = "your-gcp-project-id"
+region       = "us-central1"
+service_name = "luminair"
+
+# API Integration Credentials (Keep these secret!)
+vite_api_key        = "your-openweathermap-api-key"
+vite_gemini_api_key = "your-google-gemini-api-key"

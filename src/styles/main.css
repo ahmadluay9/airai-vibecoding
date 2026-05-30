@@ -70,6 +70,25 @@
     .card-shadow {
         box-shadow: 0 4px 20px -5px rgba(32, 33, 36, 0.08); /* Adjusted for g-black */
     }
+    
+    /* Increase Leaflet Map Attribution Font Size & Adjust Visibility */
+    .leaflet-container .leaflet-control-attribution {
+        font-size: 10px !important;
+        background: rgba(255, 255, 255, 0.85) !important;
+        border-top-left-radius: 6px;
+        padding: 2px 6px !important;
+        font-weight: 600;
+        color: var(--color-g-grey-dark);
+        backdrop-filter: blur(4px);
+    }
+    .leaflet-container .leaflet-control-attribution a {
+        color: var(--color-g-blue-medium) !important;
+        font-weight: 700;
+        text-decoration: none;
+    }
+    .leaflet-container .leaflet-control-attribution a:hover {
+        text-decoration: underline;
+    }
 }
 
 @layer utilities {

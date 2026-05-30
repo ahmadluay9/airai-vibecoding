@@ -149,6 +149,12 @@ function initMap() {
             attribution: '&copy; OpenStreetMap contributors'
         }).addTo(window.mainMap);
 
+        // Overlay WAQI Heatmap Tiles
+        L.tileLayer('https://tiles.waqi.info/tiles/usepa-aqi/{z}/{x}/{y}.png?token=demo', {
+            opacity: 0.65,
+            attribution: 'Air Quality Heatmap &copy; <a href="https://waqi.info/">WAQI</a>'
+        }).addTo(window.mainMap);
+
         window.mainMarker = L.marker([state.currentLat, state.currentLon]).addTo(window.mainMap);
 
         window.mainMap.on('click', (e) => {
@@ -187,6 +193,12 @@ function initMap() {
             attribution: '&copy; OpenStreetMap contributors'
         }).addTo(window.popupMap);
 
+        // Overlay WAQI Heatmap Tiles for the expanded view
+        L.tileLayer('https://tiles.waqi.info/tiles/usepa-aqi/{z}/{x}/{y}.png?token=demo', {
+            opacity: 0.65,
+            attribution: 'Air Quality Heatmap &copy; <a href="https://waqi.info/">WAQI</a>'
+        }).addTo(window.popupMap);
+
         window.popupMarker = L.marker([state.currentLat, state.currentLon]).addTo(window.popupMap);
 
         window.popupMap.on('click', (e) => {
@@ -210,7 +222,6 @@ function initMap() {
                 window.mainMarker.setLatLng([state.currentLat, state.currentLon]);
             }
             
-            getEl('btn-close-map-popup')?.click(); // Auto-close modal
             await fetchRealAirData(state.currentLat, state.currentLon);
             analyzeAirWithGemini();
         });
@@ -348,6 +359,13 @@ window.addEventListener('DOMContentLoaded', () => {
     const syncBtn = getEl('btn-sync-gps');
     if (syncBtn) {
         syncBtn.addEventListener('click', () => {
+            performLocationSync();
+        });
+    }
+
+    const syncBtnPopup = getEl('btn-sync-gps-popup');
+    if (syncBtnPopup) {
+        syncBtnPopup.addEventListener('click', () => {
             performLocationSync();
         });
     }
