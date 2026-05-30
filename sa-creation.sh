@@ -62,8 +62,24 @@ if ! gcloud iam service-accounts describe "${SERVICE_ACCOUNT}" --project="${PROJ
 fi
 echo -e "  ${GREEN}✓${NC} Service Account confirmed."
 
-# 3. Generate the key
-echo -e "\n${CYAN}[3/3] Generating Service Account Key...${NC}"
+# 3. Grant Required Permissions (if not already granted)
+echo -e "\n${CYAN}[3/4] Granting required permissions to Service Account...${NC}"
+ROLES=(
+  "roles/run.admin"
+  "roles/iam.serviceAccountUser"
+  "roles/serviceusage.serviceUsageAdmin"
+)
+
+for ROLE in "${ROLES[@]}"; do
+  echo -e "  ${YELLOW}→${NC} Granting ${ROLE}..."
+  gcloud projects add-iam-policy-binding "${PROJECT_ID}" \
+    --member="serviceAccount:${SERVICE_ACCOUNT}" \
+    --role="${ROLE}" >/dev/null 2>&1
+done
+echo -e "  ${GREEN}✓${NC} Permissions updated."
+
+# 4. Generate the key
+echo -e "\n${CYAN}[4/4] Generating Service Account Key...${NC}"
 if [[ -f "${KEY_FILENAME}" ]]; then
   echo -e "${YELLOW}→ Warning: ${KEY_FILENAME} already exists locally. Overwriting...${NC}"
   rm "${KEY_FILENAME}"

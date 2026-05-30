@@ -31,9 +31,10 @@ function updateApiStatusUI(statusMsg) {
     if (!apiStatusEl) return;
     
     if (statusMsg === 'Connected') {
-        apiStatusEl.innerHTML = `<span class="w-2 h-2 rounded-full bg-g-green-medium"></span> <span class="text-g-green-medium drop-shadow-md">Connected</span>`;
+        // Added explicit font-black and drop-shadow-md classes to the injected text span
+        apiStatusEl.innerHTML = `<span class="w-2 h-2 rounded-full bg-g-green"></span> <span class="text-g-green font-black drop-shadow-md">Connected</span>`;
     } else {
-        apiStatusEl.innerHTML = `<span class="w-2 h-2 rounded-full bg-g-yellow"></span> <span class="text-g-orange">${statusMsg}</span>`;
+        apiStatusEl.innerHTML = `<span class="w-2 h-2 rounded-full bg-g-yellow"></span> <span class="text-g-orange font-black drop-shadow-md">${statusMsg}</span>`;
     }
 }
 
@@ -518,8 +519,8 @@ export async function analyzeAirWithGemini() {
     if (modalBody && aiModal && !aiModal.classList.contains('hidden')) {
         modalBody.innerHTML = `
             <div class="flex flex-col items-center justify-center py-12 h-full opacity-80 mt-10">
-                <img src="https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/google-gemini.svg" alt="Gemini Loading" class="animate-spin h-8 w-8 object-contain mb-4" />
-                <span class="text-g-blue-light text-xs font-medium tracking-wide">Synthesizing advisory for ${state.userProfile}...</span>
+                <img src="https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/google-gemini.svg" alt="Gemini Loading" class="animate-spin w-12 h-12 object-contain drop-shadow-[0_0_10px_rgba(255,255,255,0.4)] mb-4" />
+                <span class="text-g-blue-light text-sm font-semibold tracking-wider">Synthesizing advisory for ${state.userProfile}...</span>
             </div>
         `;
     }
@@ -770,6 +771,9 @@ export async function analyzeAirWithGemini() {
                 const iconHtml = iconFile ? `<img src="/assets/icons/${iconFile}" class="w-6 h-6 object-contain bg-white/20 p-1 rounded-md shadow-[0_0_8px_rgba(255,255,255,0.4)] border border-white/30" alt="Icon" onerror="this.style.display='none'">` : '';
 
                 personalizedTitle.innerHTML = `${iconHtml} <span class="text-g-blue-medium">Guidance for ${state.userProfile}</span>`;
+                
+                const sectionIconStyle = "w-6 h-6 object-contain bg-white/20 p-1 rounded-md shadow-[0_0_8px_rgba(255,255,255,0.4)] border border-white/30 shrink-0";
+                
                 personalizedText.innerHTML = `<strong>[Simulated Advisory]</strong> Ensure individuals in the <strong>${state.userProfile}</strong> category avoid prolonged outdoor exposure. Add a valid Gemini API key to generate live, context-aware analysis specific to this profile.`;
             } else {
                 personalizedBlock.classList.add('hidden');

@@ -1,0 +1,24 @@
+🚀 Thrilled to unveil my latest project for the #JuaraVibeCoding challenge: Luminair — The Smart Pulse of Your Environment. 🌬️✨
+
+Luminair isn’t just another weather dashboard; it’s a multi-sensory experience that fuses atmospheric science with generative art. I wanted to build something that doesn't just show you data, but lets you "see" the air around you.
+
+Key Features:
+💨 Real-Time Air Quality: Deep-dive into pollutants (PM2.5, NO2, CO) with real-time tracking and 5-day predictive trends.
+🎨 Generative Visuals: An HTML5 Canvas engine that morphs in real-time based on local weather—from serene clear skies to turbulent storms.
+🤖 Gemini Health Advisor: Deeply personalized health recommendations and outdoor safe-windows, tailored to your demographic profile using Google’s latest Gemini 3.5 model.
+🗺️ Interactive Global Map: Tap anywhere on the planet to instantly scan the atmospheric health of that location.
+
+The Tech Stack:
+🔹 Frontend: Pure Vanilla JavaScript & CSS for maximum performance and a sleek glassmorphic UI.
+🔹 Backend: Containerized with Docker and served via Nginx.
+🔹 Cloud: Deployed to Google Cloud Run.
+🔹 DevOps: Infrastructure-as-Code with Terraform and a fully automated CI/CD pipeline via GitHub Actions and Docker Hub.
+
+Building this was a masterclass in "Vibe Coding"—balancing technical precision with creative aesthetic. 
+
+Check it out and let's breathe smarter! 🌍
+
+🎬 Video Demo: [Insert Video URL here]
+🌐 Live App: [Insert App Demo URL here]
+
+#JuaraVibeCoding #GoogleCloud #GeminiAI #Gemini35 #Terraform #VanillaJS #CloudRun #BuildingInPublic

@@ -119,6 +119,15 @@
             animation: dot-glow-beep 2s infinite cubic-bezier(0.4, 0, 0.2, 1);
         }
 
+        /* Welcome screen text glowing and beeping animation in sync with standard pulse */
+        @keyframes blue-text-glow-beep {
+            0%, 100% { text-shadow: 0 0 24px rgba(66, 133, 244, 1); opacity: 1; }
+            50% { text-shadow: 0 0 8px rgba(66, 133, 244, 0.4); opacity: 0.5; }
+        }
+        .welcome-text-beep {
+            animation: blue-text-glow-beep 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+
         /* Auto-Hide Footer Classes */
         .auto-hide-footer {
             transform: translateY(calc(100% - 8px));
@@ -148,13 +157,13 @@
     
     <!-- Welcome/Loading Screen Overlay -->
     <div id="welcome-screen" class="fixed inset-0 z-[9999] bg-[#202124] flex flex-col items-center justify-center transition-opacity duration-1000 ease-in-out">
-        <div class="w-24 h-24 rounded-2xl bg-[#3c4043] flex items-center justify-center p-4 shadow-[0_0_40px_rgba(66,133,244,0.4)] mb-6 animate-pulse">
-            <img src="/src/assets/icons/luminair-icon.png" alt="Luminair Logo" class="w-full h-full object-contain" onerror="this.style.display='none';" />
+        <div class="w-24 h-24 rounded-2xl bg-[#3c4043] flex items-center justify-center p-4 shadow-[0_0_40px_rgba(66,133,244,0.4)] mb-10 animate-pulse">
+            <img src="/assets/icons/luminair-icon.png" alt="Luminair Logo" class="w-full h-full object-contain" onerror="this.style.display='none';" />
         </div>
-        <h1 class="text-4xl font-black tracking-tight text-[#e6e6e6] mb-2 drop-shadow-md">Luminair</h1>
-        <p class="text-sm font-bold text-g-blue-medium tracking-widest uppercase">Environmental Pulse</p>
+        <h1 class="text-4xl font-black tracking-tight text-g-blue-medium uppercase mb-2 welcome-text-beep">LUMINAIR</h1>
+        <p class="text-sm font-bold text-[#e6e6e6] tracking-widest uppercase">Environmental Pulse</p>
         
-        <div class="mt-8 flex items-center gap-2">
+        <div class="mt-10 flex items-center gap-2">
             <div class="w-2 h-2 rounded-full bg-g-blue-medium animate-bounce" style="animation-delay: 0s;"></div>
             <div class="w-2 h-2 rounded-full bg-g-blue-medium animate-bounce" style="animation-delay: 0.2s;"></div>
             <div class="w-2 h-2 rounded-full bg-g-blue-medium animate-bounce" style="animation-delay: 0.4s;"></div>
@@ -168,17 +177,17 @@
         <!-- Logo Area -->
         <div class="flex items-center gap-3">
             <div class="w-8 h-8 rounded-lg bg-[#3c4043] flex items-center justify-center p-1.5">
-                <img src="/src/assets/icons/luminair-icon.png" alt="Luminair" class="w-full h-full object-contain" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';" />
-                <svg class="w-5 h-5 text-g-blue-medium hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A4 4 0 002 11V9a2 2 0 00-2-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 002-2m-6 9v-1a5 5 0 015-5h1a5 5 0 015 5v1a2 2 0 01-2 2H5a2 2 0 01-2-2z"></path></svg>
+                <img src="/assets/icons/luminair-icon.png" alt="Luminair" class="w-full h-full object-contain" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';" />
+                <svg class="w-5 h-5 text-g-blue-medium hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A4 4 0 002 11V9a2 2 0 00-2-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 002-2m-6 9v-1a5 5 0 015-5h1a5 5 0 015 5v1a5 5 0 01-5 5H5a2 2 0 01-2-2z"></path></svg>
             </div>
 
             <div>
-                <div class="text-[10px] font-bold text-g-blue-medium tracking-wider uppercase flex items-center gap-2">
-                    <span>Luminair</span> 
-                    <span class="bg-g-grey-light text-g-grey-dark px-1 rounded">V1.0</span>
+                <div class="flex items-center gap-2 mb-0.5">
+                    <span class="text-xs font-black text-g-blue-medium uppercase drop-shadow-[0_1px_2px_rgba(0,0,0,0.9)]">Luminair</span> 
+                    <span class="bg-g-grey-light text-g-grey-dark px-1 rounded text-[9px] font-bold uppercase tracking-wider">V1.0</span>
                 </div>
 
-                <h1 class="text-base font-black tracking-tight text-[#e6e6e6] leading-none mt-0.5">
+                <h1 class="text-base font-black tracking-tight text-[#e6e6e6] leading-none">
                     Environmental Pulse
                 </h1>
             </div>
@@ -243,33 +252,33 @@
                     <div class="flex flex-col gap-2 mt-1 shrink-0">
                         <div class="grid grid-cols-3 gap-2">
                             <div class="bg-transparent rounded-xl p-2 flex flex-col items-center justify-center text-center transition-colors hover:bg-white/10 w-full text-sm text-g-black">
-                                <img src="/src/assets/icons/wind.png" alt="Wind" class="w-5 h-5 mb-1.5 opacity-90 drop-shadow-[0_2px_3px_rgba(0,0,0,0.4)]" onerror="this.style.display='none'">
+                                <img src="/assets/icons/wind.png" alt="Wind" class="w-5 h-5 mb-1.5 opacity-90 drop-shadow-[0_2px_3px_rgba(0,0,0,0.4)]" onerror="this.style.display='none'">
                                 <span class="text-xs font-bold text-[#e6e6e6] uppercase tracking-wider mb-0.5">Wind</span>
                                 <span id="env-wind" class="text-sm font-bold text-g-black leading-none cursor-help border-b border-dashed border-g-grey/20 pb-px" data-js-tooltip="Loading...">-</span>
                             </div>
                             <div class="bg-transparent rounded-xl p-2 flex flex-col items-center justify-center text-center transition-colors hover:bg-white/10 w-full text-sm text-g-black">
-                                <img src="/src/assets/icons/humidity.png" alt="Humidity" class="w-5 h-5 mb-1.5 opacity-90 drop-shadow-[0_2px_3px_rgba(0,0,0,0.4)]" onerror="this.style.display='none'">
+                                <img src="/assets/icons/humidity.png" alt="Humidity" class="w-5 h-5 mb-1.5 opacity-90 drop-shadow-[0_2px_3px_rgba(0,0,0,0.4)]" onerror="this.style.display='none'">
                                 <span class="text-xs font-bold text-[#e6e6e6] uppercase tracking-wider mb-0.5">Humidity</span>
                                 <span id="env-humidity" class="text-sm font-bold text-g-black leading-none cursor-help border-b border-dashed border-g-grey/20 pb-px">-</span>
                             </div>
                             <div class="bg-transparent rounded-xl p-2 flex flex-col items-center justify-center text-center transition-colors hover:bg-white/10 w-full text-sm text-g-black">
-                                <img src="/src/assets/icons/uv-index.png" alt="UV Index" class="w-5 h-5 mb-1.5 opacity-90 drop-shadow-[0_2px_3px_rgba(0,0,0,0.4)]" onerror="this.style.display='none'">
+                                <img src="/assets/icons/uv-index.png" alt="UV Index" class="w-5 h-5 mb-1.5 opacity-90 drop-shadow-[0_2px_3px_rgba(0,0,0,0.4)]" onerror="this.style.display='none'">
                                 <span class="text-xs font-bold text-[#e6e6e6] uppercase tracking-wider mb-0.5">UV Index</span>
                                 <span id="env-uv" class="text-sm font-bold text-g-black leading-none cursor-help border-b border-dashed border-g-grey/20 pb-px">-</span>
                             </div>
                             
                             <div class="bg-transparent rounded-xl p-2 flex flex-col items-center justify-center text-center transition-colors hover:bg-white/10 w-full text-sm text-g-black">
-                                <img src="/src/assets/icons/thermometer.png" alt="Feels Like" class="w-5 h-5 mb-1.5 opacity-90 drop-shadow-[0_2px_3px_rgba(0,0,0,0.4)]" onerror="this.style.display='none'">
+                                <img src="/assets/icons/thermometer.png" alt="Feels Like" class="w-5 h-5 mb-1.5 opacity-90 drop-shadow-[0_2px_3px_rgba(0,0,0,0.4)]" onerror="this.style.display='none'">
                                 <span class="text-xs font-bold text-[#e6e6e6] uppercase tracking-wider mb-0.5">Feels Like</span>
                                 <span id="env-feels-like" class="text-sm font-bold text-g-black leading-none cursor-help border-b border-dashed border-g-grey/20 pb-px">-</span>
                             </div>
                             <div class="bg-transparent rounded-xl p-2 flex flex-col items-center justify-center text-center transition-colors hover:bg-white/10 w-full text-sm text-g-black">
-                                <img src="/src/assets/icons/atmospheric.png" alt="Pressure" class="w-5 h-5 mb-1.5 opacity-90 drop-shadow-[0_2px_3px_rgba(0,0,0,0.4)]" onerror="this.style.display='none'">
+                                <img src="/assets/icons/atmospheric.png" alt="Pressure" class="w-5 h-5 mb-1.5 opacity-90 drop-shadow-[0_2px_3px_rgba(0,0,0,0.4)]" onerror="this.style.display='none'">
                                 <span class="text-xs font-bold text-[#e6e6e6] uppercase tracking-wider mb-0.5">Pressure</span>
                                 <span id="env-pressure" class="text-sm font-bold text-g-black leading-none cursor-help border-b border-dashed border-g-grey/20 pb-px">-</span>
                             </div>
                             <div class="bg-transparent rounded-xl p-2 flex flex-col items-center justify-center text-center transition-colors hover:bg-white/10 w-full text-sm text-g-black">
-                                <img src="/src/assets/icons/visibility.png" alt="Visibility" class="w-5 h-5 mb-1.5 opacity-90 drop-shadow-[0_2px_3px_rgba(0,0,0,0.4)]" onerror="this.style.display='none'">
+                                <img src="/assets/icons/visibility.png" alt="Visibility" class="w-5 h-5 mb-1.5 opacity-90 drop-shadow-[0_2px_3px_rgba(0,0,0,0.4)]" onerror="this.style.display='none'">
                                 <span class="text-xs font-bold text-[#e6e6e6] uppercase tracking-wider mb-0.5">Visibility</span>
                                 <span id="env-visibility" class="text-sm font-bold text-g-black leading-none cursor-help border-b border-dashed border-g-grey/20 pb-px font-sans">-</span>
                             </div>
@@ -278,12 +287,12 @@
                         <!-- Sunrise & Sunset Tiles -->
                         <div class="grid grid-cols-2 gap-2">
                             <div class="bg-transparent rounded-xl p-2 flex flex-col items-center justify-center text-center transition-colors hover:bg-white/10 w-full">
-                                <img src="/src/assets/icons/sunrise.png" alt="Sunrise" class="w-5 h-5 mb-1.5 opacity-90 drop-shadow-[0_2px_3px_rgba(0,0,0,0.4)]" onerror="this.style.display='none'">
+                                <img src="/assets/icons/sunrise.png" alt="Sunrise" class="w-5 h-5 mb-1.5 opacity-90 drop-shadow-[0_2px_3px_rgba(0,0,0,0.4)]" onerror="this.style.display='none'">
                                 <span class="text-xs font-bold text-[#e6e6e6] uppercase tracking-wider mb-0.5">Sunrise</span>
                                 <span id="env-sunrise" class="text-sm font-bold text-g-black leading-none cursor-help border-b border-dashed border-g-grey/20 pb-px">-</span>
                             </div>
                             <div class="bg-transparent rounded-xl p-2 flex flex-col items-center justify-center text-center transition-colors hover:bg-white/10 w-full">
-                                <img src="/src/assets/icons/sunset.png" alt="Sunset" class="w-5 h-5 mb-1.5 opacity-90 drop-shadow-[0_2px_3px_rgba(0,0,0,0.4)]" onerror="this.style.display='none'">
+                                <img src="/assets/icons/sunset.png" alt="Sunset" class="w-5 h-5 mb-1.5 opacity-90 drop-shadow-[0_2px_3px_rgba(0,0,0,0.4)]" onerror="this.style.display='none'">
                                 <span class="text-xs font-bold text-[#e6e6e6] uppercase tracking-wider mb-0.5">Sunset</span>
                                 <span id="env-sunset" class="text-sm font-bold text-g-black text-xs font-bold leading-none cursor-help border-b border-dashed border-g-grey/20 pb-px">-</span>
                             </div>
@@ -329,7 +338,7 @@
                             
                             <div class="flex items-center justify-between gap-1">
                                 <span class="text-g-black text-xs font-mono uppercase tracking-wide shrink-0">API:</span> 
-                                <span id="api-status" class="flex items-center justify-end gap-1.5 text-sm text-right flex-1"><span class="w-2 h-2 rounded-full bg-g-grey shrink-0"></span> Con...</span>
+                                <span id="api-status" class="flex items-center justify-end gap-1.5 text-sm font-black drop-shadow-md text-right flex-1"><span class="w-2 h-2 rounded-full bg-g-grey shrink-0"></span> Con...</span>
                             </div>
                             <div class="flex justify-between items-start gap-1">
                                 <span class="text-g-black text-xs font-mono uppercase tracking-wide shrink-0">Sync:</span> 
@@ -511,7 +520,7 @@
                             <input type="text" id="location-input" placeholder="Search city..." class="w-full bg-transparent pr-1 py-1.5 text-sm text-g-black focus:outline-none placeholder-g-grey placeholder:text-xs">
                         </div>
                         <button id="btn-sync-gps" class="bg-[#3c4043] hover:bg-g-grey-dark text-white px-3 py-1.5 rounded-full text-xs font-bold transition-colors flex items-center gap-1 shrink-0 shadow-sm">
-                            <img src="/src/assets/icons/map.png" alt="Map" class="w-3 h-3 object-contain" onerror="this.style.display='none'">
+                            <img src="/assets/icons/map.png" alt="Map" class="w-3 h-3 object-contain" onerror="this.style.display='none'">
                             Sync Loc.
                         </button>
                         <button id="btn-map-popup" class="bg-[#3c4043] hover:bg-g-grey-dark text-white p-2 rounded-full text-xs font-bold transition-colors flex items-center justify-center shrink-0 shadow-sm" title="Expand Map">
@@ -548,19 +557,17 @@
                 <div class="flex-1 bg-g-black/60 backdrop-blur-md border border-white/10 rounded-2xl p-4 shadow-2xl flex flex-col min-h-0 relative overflow-hidden text-sm hover-blue-rotate">
                     <!-- AI Loading State (Smallest Utility Text: 10px) -->
                     <div id="ai-loading" class="absolute inset-0 z-20 bg-g-black/80 flex flex-col items-center justify-center hidden">
-                        <img src="https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/google-gemini.svg" alt="Gemini Loading" class="animate-spin h-8 w-8 object-contain mb-3" />
-                        <span class="text-g-blue-light text-[10px] font-medium tracking-wide">Synthesizing...</span>
+                        <img src="https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/google-gemini.svg" alt="Gemini Loading" class="animate-spin w-12 h-12 object-contain drop-shadow-[0_0_10px_rgba(255,255,255,0.4)] mb-3" />
+                        <span class="text-g-blue-light text-sm font-semibold tracking-wider">Synthesizing...</span>
                     </div>
 
                     <div id="ai-content-block" class="flex-1 flex flex-col min-h-0 gap-3">
                         <div class="flex items-center justify-between shrink-0">
-                            <div class="flex items-center gap-2">
-                                <div class="w-6 h-6 rounded-lg bg-g-blue-medium/20 flex items-center justify-center shrink-0">
-                                    <img src="https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/google-gemini.svg" alt="Gemini AI" class="w-4 h-4 object-contain" onerror="this.style.display='none'" />
-                                </div>
+                            <div class="flex items-center gap-3">
+                                <img src="https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/google-gemini.svg" alt="Gemini AI" class="w-12 h-12 object-contain shrink-0 drop-shadow-[0_0_10px_rgba(255,255,255,0.4)]" onerror="this.style.display='none'" />
                                 <div>
-                                    <!-- Smallest Utility Text (10px) -->
-                                    <div class="text-xs font-bold text-g-blue-medium tracking-wider uppercase">AI Cognitive Guard</div>
+                                    <!-- Small Utility Text -->
+                                    <div class="text-xs font-black text-g-blue-medium tracking-wider uppercase drop-shadow-md">AI Cognitive Guard</div>
                                     <h2 class="text-lg font-black text-white leading-none mt-0.5">Clinician Advisory</h2>
                                 </div>
                             </div>
@@ -599,14 +606,17 @@
                         <div class="flex-1 overflow-y-auto dark-scrollbar space-y-2 pr-1">
                             <div class="bg-white/5 border border-[#3c4043] rounded-xl p-3">
                                 <!-- Standard Label (xs) -->
-                                <h3 class="text-xs font-bold text-g-blue-medium tracking-wider uppercase mb-1.5">Safety Digest</h3>
+                                <h3 class="text-[15px] font-black text-g-blue-medium mb-2 flex items-center gap-1.5 drop-shadow-sm">
+                                    <img src="/assets/icons/protection.png" class="w-6 h-6 object-contain bg-white/20 p-1 rounded-md shadow-[0_0_8px_rgba(255,255,255,0.4)] border border-white/30" alt="Protection" onerror="this.style.display='none'">
+                                    Safety Digest
+                                </h3>
                                 <!-- Standard Readable Text (sm) -->
                                 <div id="ai-digest" class="text-g-grey-light text-sm leading-relaxed font-medium">Waiting for environmental sensor sync...</div>
                             </div>
                             
                             <div id="personalized-block" class="bg-g-blue-medium/10 border border-g-blue-medium/20 rounded-xl p-3 hidden">
                                 <!-- Standard Label (xs) -->
-                                <h3 id="personalized-title" class="text-[15px] font-black text-[#e6e6e6] mb-2 flex items-center gap-1.5 drop-shadow-sm">
+                                <h3 id="personalized-title" class="text-[15px] font-black text-g-blue-medium mb-2 flex items-center gap-1.5 drop-shadow-sm">
                                     <span class="text-g-blue-light text-xs leading-none">🎯</span> <span id="personalized-title-text">Guidance</span>
                                 </h3>
                                 <!-- Standard Readable Text (sm) -->
@@ -637,17 +647,17 @@
             <div class="flex flex-wrap items-center justify-center md:justify-end gap-4 text-[10px] font-medium w-full md:w-auto text-white">
                 <span class="text-[#e6e6e6] uppercase tracking-wider font-bold mr-1">Powered By:</span>
                 <a href="https://openweathermap.org/" target="_blank" class="hover:opacity-70 transition-opacity flex items-center gap-1.5 group">
-                    <img src="/src/assets/icons/logo-openweathermap.png" class="h-3.5 object-contain" alt="OpenWeatherMap" onerror="this.style.display='none'">
+                    <img src="/assets/icons/logo-openweathermap.png" class="h-3.5 object-contain" alt="OpenWeatherMap" onerror="this.style.display='none'">
                     <span class="text-[#ffffff] group-hover:text-[#e6e6e6] transition-colors">OpenWeatherMap</span>
                 </a>
                 <span class="text-[#ffffff]">|</span>
                 <a href="https://uvindexapi.com/" target="_blank" class="hover:opacity-70 transition-opacity flex items-center gap-1.5 group">
-                    <img src="/src/assets/icons/logo-uvindexapi.png" class="h-3.5 object-contain" alt="UVIndexAPI" onerror="this.style.display='none'">
+                    <img src="/assets/icons/logo-uvindexapi.png" class="h-3.5 object-contain" alt="UVIndexAPI" onerror="this.style.display='none'">
                     <span class="text-[#ffffff] group-hover:text-[#e6e6e6] transition-colors">UVIndexAPI</span>
                 </a>
                 <span class="text-[#ffffff]">|</span>
                 <a href="https://waqi.info/" target="_blank" class="hover:opacity-70 transition-opacity flex items-center gap-1.5 group">
-                    <img src="/src/assets/icons/logo_waqi.png" class="h-3.5 object-contain" alt="WAQI" onerror="this.style.display='none'">
+                    <img src="/assets/icons/logo_waqi.png" class="h-3.5 object-contain" alt="WAQI" onerror="this.style.display='none'">
                     <span class="text-[#ffffff] group-hover:text-[#e6e6e6] transition-colors">WAQI</span>
                 </a>
                 <span class="text-[#ffffff]">|</span>
@@ -657,12 +667,12 @@
                 </a>
                 <span class="text-[#ffffff]">|</span>
                 <a href="https://leafletjs.com/" target="_blank" class="hover:opacity-70 transition-opacity flex items-center gap-1.5 group">
-                    <img src="/src/assets/icons/logo-leaflet.png" class="h-3.5 object-contain" alt="Leaflet" onerror="this.style.display='none'">
+                    <img src="/assets/icons/logo-leaflet.png" class="h-3.5 object-contain" alt="Leaflet" onerror="this.style.display='none'">
                     <span class="text-[#ffffff] group-hover:text-[#e6e6e6] transition-colors">Leaflet</span>
                 </a>
                 <span class="text-[#ffffff]">|</span>
                 <a href="https://www.flaticon.com/packs/weather-482" target="_blank" class="hover:opacity-70 transition-opacity flex items-center gap-1.5 group">
-                    <img src="/src/assets/icons/logo-flaticon.png" class="h-3.5 object-contain" alt="Flaticon" onerror="this.style.display='none'">
+                    <img src="/assets/icons/logo-flaticon.png" class="h-3.5 object-contain" alt="Flaticon" onerror="this.style.display='none'">
                     <span class="text-[#ffffff] group-hover:text-[#e6e6e6] transition-colors">Flaticon</span>
                 </a>
             </div>
@@ -681,9 +691,7 @@
             <!-- Header -->
             <div class="flex items-center justify-between p-4 border-b border-[#3c4043] shrink-0">
                 <div class="flex items-center gap-3">
-                    <div class="w-8 h-8 rounded-lg bg-g-blue-medium/20 flex items-center justify-center shrink-0">
-                        <img src="https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/google-gemini.svg" alt="Gemini AI" class="w-5 h-5 object-contain" onerror="this.style.display='none'" />
-                    </div>
+                    <img src="https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/google-gemini.svg" alt="Gemini AI" class="w-12 h-12 object-contain shrink-0 drop-shadow-[0_0_10px_rgba(255,255,255,0.4)]" onerror="this.style.display='none'" />
                     <div>
                         <!-- Smallest Utility Text (10px) -->
                         <div class="text-[10px] font-bold text-g-blue-medium tracking-wider uppercase">AI Cognitive Guard</div>
@@ -736,7 +744,7 @@
                 <div class="flex items-center gap-3">
                     <div class="w-8 h-8 rounded-lg bg-g-blue-medium/20 flex items-center justify-center shrink-0">
                         <!-- Synced header icon with same asset as "Sync Loc." action button -->
-                        <img src="/src/assets/icons/map.png" class="w-5 h-5 object-contain" alt="Map" onerror="this.style.display='none';">
+                        <img src="/assets/icons/map.png" class="w-5 h-5 object-contain" alt="Map" onerror="this.style.display='none';">
                     </div>
                     <div>
                         <div class="text-[10px] font-bold text-g-grey-dark tracking-wider uppercase">Interactive Map Explorer</div>
@@ -758,7 +766,7 @@
                         <input type="text" id="popup-location-input" placeholder="Search city on map..." class="w-full bg-transparent pr-1 py-1.5 text-sm font-semibold text-g-black focus:outline-none placeholder-g-grey">
                     </div>
                     <button id="btn-sync-gps-popup" class="bg-[#3c4043] hover:bg-g-grey-dark text-white px-4 py-1.5 rounded-full text-xs font-bold transition-colors flex items-center gap-1.5 shrink-0 shadow-xl border border-transparent">
-                        <img src="/src/assets/icons/map.png" alt="Map" class="w-3.5 h-3.5 object-contain" onerror="this.style.display='none'">
+                        <img src="/assets/icons/map.png" alt="Map" class="w-3.5 h-3.5 object-contain" onerror="this.style.display='none'">
                         Sync Loc.
                     </button>
                 </div>
