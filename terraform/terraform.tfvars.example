@@ -1,6 +1,6 @@
 # Google Cloud Project Configuration
 project_id   = "your-gcp-project-id"
-region       = "us-central1"
+region       = "asia-southeast2"
 service_name = "luminair"
 
 # API Integration Credentials (Keep these secret!)

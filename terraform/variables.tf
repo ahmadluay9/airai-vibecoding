@@ -6,7 +6,7 @@ variable "project_id" {
 variable "region" {
   type        = string
   description = "The GCP region where the Artifact Registry and Cloud Run service will reside."
-  default     = "us-central1"
+  default     = "asia-southeast2"
 }
 
 variable "service_name" {

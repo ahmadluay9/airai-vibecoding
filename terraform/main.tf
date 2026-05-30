@@ -1,24 +1,7 @@
 # 1. Enable Required Google API Services
 resource "google_project_service" "services" {
-  for_each = toset([
-    "run.googleapis.com",                  # Cloud Run API
-    "artifactregistry.googleapis.com"      # Artifact Registry API
-  ])
-  service            = each.key
+  service            = "run.googleapis.com" # Cloud Run API
   disable_on_destroy = false
-}
-
-# 2. Provision Google Artifact Registry Repository for Container Images
-resource "google_artifact_registry_repository" "repo" {
-  depends_on    = [google_project_service.services]
-  location      = var.region
-  repository_id = var.service_name
-  description   = "Docker container repository for ${var.service_name}"
-  format        = "DOCKER"
-
-  docker_config {
-    immutable_tags = false
-  }
 }
 
 # 3. Provision Google Cloud Run v2 Service
