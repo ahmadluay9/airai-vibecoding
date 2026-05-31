@@ -145,8 +145,10 @@ vite.config.ts.timestamp-*
 gcp-sa-key.json
 .antigravitycli
 
+example.MD
 PROMPT.MD
 setup-wip.sh
+linkedin-post.txt
 
 # Terraform
 .terraform/

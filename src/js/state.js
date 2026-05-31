@@ -44,5 +44,8 @@ export const state = {
     selectedPollutant: 'pm2_5',
     pm25ForecastMode: '24h',
     pm25ForecastData24h: [],
-    pm25ForecastData5d: []
+    pm25ForecastData5d: [],
+
+    // Multimodal Toggling Mode
+    isMultimodalOnly: false
 };

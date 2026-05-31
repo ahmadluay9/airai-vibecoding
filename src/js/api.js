@@ -517,6 +517,20 @@ export async function analyzeAirWithGemini() {
     if (contentBlock) contentBlock.classList.add('hidden');
 
     if (modalBody && aiModal && !aiModal.classList.contains('hidden')) {
+        const hvacCard = getEl('hvac-filter-block');
+        const plantCard = getEl('plant-advisor-block');
+        const sidebarContainer = getEl('commute-block')?.parentElement || getEl('digest-block')?.parentElement;
+        if (hvacCard && sidebarContainer && modalBody.contains(hvacCard)) {
+            hvacCard.classList.add('hidden');
+            hvacCard.className = "bg-white/5 border border-[#3c4043] rounded-xl p-3 transition-all duration-300 hidden hvac-glowing";
+            sidebarContainer.appendChild(hvacCard);
+        }
+        if (plantCard && sidebarContainer && modalBody.contains(plantCard)) {
+            plantCard.classList.add('hidden');
+            plantCard.className = "bg-white/5 border border-[#3c4043] rounded-xl p-3 transition-all duration-300 hidden plant-glowing";
+            sidebarContainer.appendChild(plantCard);
+        }
+
         modalBody.innerHTML = `
             <div class="flex flex-col items-center justify-center py-12 h-full opacity-80 mt-10">
                 <img src="https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/google-gemini.svg" alt="Gemini Loading" class="animate-spin w-12 h-12 object-contain drop-shadow-[0_0_10px_rgba(255,255,255,0.4)] mb-4" />
@@ -586,9 +600,57 @@ export async function analyzeAirWithGemini() {
             pollutantContext: {
                 type: "STRING",
                 description: "Identify the worst pollutant right now and explain in 1 sentence what might be causing it based on the wind/weather."
+            },
+            ventilationAdvisory: {
+                type: "OBJECT",
+                properties: {
+                    shouldVentilate: {
+                        type: "BOOLEAN",
+                        description: "Determine whether the user should open their windows to naturally ventilate right now based on outdoor air quality, temperature, and pollutants."
+                    },
+                    recommendedMinutes: {
+                        type: "INTEGER",
+                        description: "Recommended ventilation duration in minutes (e.g., 15, 30, 45, or 0 if shouldVentilate is false)."
+                    },
+                    energySavingRatio: {
+                        type: "STRING",
+                        description: "A short, engaging estimation of electricity/AC savings (e.g., 'Est. 12% HVAC savings' or 'Est. 15% energy saved')."
+                    },
+                    rationale: {
+                        type: "STRING",
+                        description: "1-2 sentence explanation of why they should (or should not) open their windows right now based on temperature, wind, and PM2.5/PM10."
+                    }
+                },
+                required: ["shouldVentilate", "recommendedMinutes", "energySavingRatio", "rationale"]
+            },
+            greenCommute: {
+                type: "OBJECT",
+                properties: {
+                    recommendedMode: {
+                        type: "STRING",
+                        description: "Best active mode of transport given current weather/AQI (e.g., 'Walking', 'Bicycling', 'Public Transit', 'Avoid Active Commute')."
+                    },
+                    optimalTimeWindow: {
+                        type: "STRING",
+                        description: "The best 1-2 hour block for an active commute over the next 24 hours (e.g., '08:00 AM - 10:00 AM')."
+                    },
+                    carbonSavedKg: {
+                        type: "NUMBER",
+                        description: "Estimated CO2 offset in kg compared to driving a single-occupancy vehicle (e.g. 1.2 or 0.8)."
+                    },
+                    exposureReductionPct: {
+                        type: "INTEGER",
+                        description: "Estimated percentage of respiratory particle exposure saved by choosing green routing / window (e.g. 35 or 40)."
+                    },
+                    advisory: {
+                        type: "STRING",
+                        description: "1-2 sentence green commuting tip, highlighting why this mode/time is safest."
+                    }
+                },
+                required: ["recommendedMode", "optimalTimeWindow", "carbonSavedKg", "exposureReductionPct", "advisory"]
             }
         },
-        required: ["digest", "personalizedAdvice", "safeWindow", "actionChecklist", "pollutantContext"]
+        required: ["digest", "personalizedAdvice", "safeWindow", "actionChecklist", "pollutantContext", "ventilationAdvisory", "greenCommute"]
     };
 
     const promptData = `
@@ -606,7 +668,10 @@ export async function analyzeAirWithGemini() {
         
         The user has requested personalized advice specifically tailored for this demographic/profile: ${state.userProfile}.
         
-        Based on ALL provided current and forecasted data, generate a clinical safety digest and tailored advice.
+        Based on ALL provided current and forecasted data, generate:
+        1. A clinical safety digest and tailored advice.
+        2. A smart ambient ventilation & HVAC energy-saving advisory. If outdoor air is clean (AQI <= 2 and PM2.5/PM10 within safe limits) and weather/temperature is suitable, recommend ventilating with open windows (shouldVentilate: true) and estimate the ventilation duration and engaging energy savings (e.g. 'Est. 15% energy saved'). If outdoor AQI is poor (>2) or pollutants are high, advise keeping windows closed (shouldVentilate: false) to protect indoor air quality.
+        3. A "Green Commute" active travel advice. Recommend the healthiest active transport mode (Walking, Bicycling, Public Transit, or 'Avoid Active Commute') given raw AQI, temperature, and UV index. Identify the best 1-2 hour optimal window, calculate estimated carbon offset compared to single passenger driving (e.g. 1.2 or 0.8 kg CO2), and estimate a respiratory exposure reduction percentage (e.g. 35 or 40) compared to commuting during peak traffic hours. Provide a brief encouraging, localized tip.
     `;
 
     try {
@@ -702,25 +767,104 @@ export async function analyzeAirWithGemini() {
             }
         }
 
+        // Render Smart Ambient Ventilation card
+        const ventBlock = getEl('ventilation-block');
+        const ventBadge = getEl('ventilation-badge');
+        const ventSaving = getEl('ventilation-saving');
+        const ventRationale = getEl('ventilation-rationale');
+
+        if (ventBlock && aiData.ventilationAdvisory) {
+            const adv = aiData.ventilationAdvisory;
+            ventBlock.classList.remove('hidden');
+            
+            if (adv.shouldVentilate) {
+                if (ventBadge) {
+                    ventBadge.innerText = `OPEN WINDOWS`;
+                    ventBadge.className = "px-2.5 py-0.5 rounded-full text-xs font-bold bg-[#34A853]/20 text-[#CEEAD6] border border-[#34A853]/30";
+                }
+                if (ventSaving) {
+                    ventSaving.innerText = adv.energySavingRatio || `Est. 15% energy saved`;
+                    ventSaving.classList.remove('hidden');
+                }
+                if (ventRationale) {
+                    ventRationale.innerHTML = `${adv.rationale || ''} Recommended ventilation duration: <strong>${adv.recommendedMinutes || 30} mins</strong>.`;
+                }
+            } else {
+                if (ventBadge) {
+                    ventBadge.innerText = `KEEP WINDOWS CLOSED`;
+                    ventBadge.className = "px-2.5 py-0.5 rounded-full text-xs font-bold bg-[#EA4335]/20 text-[#FAD2CF] border border-[#EA4335]/30";
+                }
+                if (ventSaving) {
+                    ventSaving.classList.add('hidden');
+                }
+                if (ventRationale) {
+                    ventRationale.innerHTML = `${adv.rationale || 'Outdoor air quality is currently poor. Keep windows closed to protect indoor air.'}`;
+                }
+            }
+        } else if (ventBlock) {
+            ventBlock.classList.add('hidden');
+        }
+
+        // Render Green Commute Active Travel Planner
+        const commuteBlock = getEl('commute-block');
+        const commuteMode = getEl('commute-mode');
+        const commuteCarbon = getEl('commute-carbon');
+        const commuteTime = getEl('commute-time');
+        const commuteExposure = getEl('commute-exposure');
+        const commuteAdvisory = getEl('commute-advisory');
+
+        if (commuteBlock && aiData.greenCommute) {
+            const comm = aiData.greenCommute;
+            commuteBlock.classList.remove('hidden');
+            
+            if (commuteMode) {
+                const modeStr = (comm.recommendedMode || 'Walking').toUpperCase();
+                commuteMode.innerText = modeStr.includes('COMMUTE') || modeStr.includes('TRAVEL') ? modeStr : modeStr + ' RECOMMENDED';
+                if (comm.recommendedMode?.toLowerCase().includes('avoid')) {
+                    commuteMode.className = "px-2.5 py-0.5 rounded-full text-xs font-bold bg-[#EA4335]/20 text-[#FAD2CF] border border-[#EA4335]/30";
+                    commuteMode.innerText = 'AVOID ACTIVE COMMUTE';
+                } else if (comm.recommendedMode?.toLowerCase().includes('transit')) {
+                    commuteMode.className = "px-2.5 py-0.5 rounded-full text-xs font-bold bg-[#FBBC04]/20 text-[#FEEFC3] border border-[#FBBC04]/30";
+                } else {
+                    commuteMode.className = "px-2.5 py-0.5 rounded-full text-xs font-bold bg-[#4285F4]/20 text-[#D2E3FC] border border-[#4285F4]/30";
+                }
+            }
+            if (commuteCarbon) {
+                const carbonVal = parseFloat(comm.carbonSavedKg || 0);
+                commuteCarbon.innerText = `-${carbonVal.toFixed(1)} kg CO₂`;
+                if (carbonVal <= 0) {
+                    commuteCarbon.classList.add('hidden');
+                } else {
+                    commuteCarbon.classList.remove('hidden');
+                }
+            }
+            if (commuteTime) {
+                commuteTime.innerText = comm.optimalTimeWindow || '08:00 AM - 10:00 AM';
+            }
+            if (commuteExposure) {
+                commuteExposure.innerText = `${comm.exposureReductionPct || 35}%`;
+            }
+            if (commuteAdvisory) {
+                commuteAdvisory.innerText = comm.advisory || '';
+            }
+        } else if (commuteBlock) {
+            commuteBlock.classList.add('hidden');
+        }
+
         if (loading) loading.classList.add('hidden');
         if (contentBlock) contentBlock.classList.remove('hidden');
         
-        if (modalBody) {
-            modalBody.innerHTML = '';
-            const digestCard = getEl('ai-digest')?.parentElement;
-            const pCard = getEl('personalized-block');
-            
-            if (digestCard) {
-                const cloneDigest = digestCard.cloneNode(true);
-                cloneDigest.className = "bg-white/5 border border-[#3c4043] rounded-xl p-4";
-                modalBody.appendChild(cloneDigest);
-            }
-            if (pCard && !pCard.classList.contains('hidden')) {
-                const clonePersonalized = pCard.cloneNode(true);
-                clonePersonalized.classList.remove('hidden');
-                clonePersonalized.className = "bg-g-blue-medium/10 border border-[#3c4043] rounded-xl p-4 mt-4";
-                modalBody.appendChild(clonePersonalized);
-            }
+        if (typeof window !== 'undefined' && window.syncMultimodalView) {
+            window.syncMultimodalView();
+        } else if (state.isMultimodalOnly) {
+            getEl('digest-block')?.classList.add('hidden');
+            getEl('personalized-block')?.classList.add('hidden');
+            getEl('ventilation-block')?.classList.add('hidden');
+            getEl('commute-block')?.classList.add('hidden');
+        }
+        
+        if (typeof window !== 'undefined' && window.populateModalBody) {
+            window.populateModalBody();
         }
         
         // Compile the complete advisory text (strip HTML tags) and prepare TTS for manual playback
@@ -779,25 +923,70 @@ export async function analyzeAirWithGemini() {
                 personalizedBlock.classList.add('hidden');
             }
         }
-        
-        if (modalBody) {
-            modalBody.innerHTML = '';
-            const digestCard = getEl('ai-digest')?.parentElement;
-            const pCard = getEl('personalized-block');
+
+        // Render Simulated Smart Ventilation Card
+        const ventBlock = getEl('ventilation-block');
+        if (ventBlock) {
+            ventBlock.classList.remove('hidden');
+            const ventBadge = getEl('ventilation-badge');
+            const ventSaving = getEl('ventilation-saving');
+            const ventRationale = getEl('ventilation-rationale');
             
-            if (digestCard) {
-                const cloneDigest = digestCard.cloneNode(true);
-                cloneDigest.className = "bg-white/5 border border-[#3c4043] rounded-xl p-4";
-                modalBody.appendChild(cloneDigest);
+            if (ventBadge) {
+                ventBadge.innerText = `OPEN WINDOWS`;
+                ventBadge.className = "px-2.5 py-0.5 rounded-full text-xs font-bold bg-[#34A853]/20 text-[#CEEAD6] border border-[#34A853]/30";
             }
-            if (pCard && !pCard.classList.contains('hidden')) {
-                const clonePersonalized = pCard.cloneNode(true);
-                clonePersonalized.classList.remove('hidden');
-                clonePersonalized.className = "bg-g-blue-medium/10 border border-[#3c4043] rounded-xl p-4 mt-4";
-                modalBody.appendChild(clonePersonalized);
+            if (ventSaving) {
+                ventSaving.innerText = `Est. 15% energy saved`;
+                ventSaving.classList.remove('hidden');
+            }
+            if (ventRationale) {
+                ventRationale.innerHTML = `<strong>[Simulated Advisory]</strong> Outdoor air quality is clean and temperatures are cool. Recommended ventilation duration: <strong>30 mins</strong>. Add a valid Gemini API key to calculate real-time ventilation metrics.`;
+            }
+        }
+
+        // Render Simulated Green Commute Card
+        const commuteBlock = getEl('commute-block');
+        if (commuteBlock) {
+            commuteBlock.classList.remove('hidden');
+            const commuteMode = getEl('commute-mode');
+            const commuteCarbon = getEl('commute-carbon');
+            const commuteTime = getEl('commute-time');
+            const commuteExposure = getEl('commute-exposure');
+            const commuteAdvisory = getEl('commute-advisory');
+            
+            if (commuteMode) {
+                commuteMode.innerText = `WALKING RECOMMENDED`;
+                commuteMode.className = "px-2.5 py-0.5 rounded-full text-xs font-bold bg-[#4285F4]/20 text-[#D2E3FC] border border-[#4285F4]/30";
+            }
+            if (commuteCarbon) {
+                commuteCarbon.innerText = `-1.2 kg CO₂`;
+                commuteCarbon.classList.remove('hidden');
+            }
+            if (commuteTime) {
+                commuteTime.innerText = `08:00 AM - 10:00 AM`;
+            }
+            if (commuteExposure) {
+                commuteExposure.innerText = `35%`;
+            }
+            if (commuteAdvisory) {
+                commuteAdvisory.innerHTML = `<strong>[Simulated Advisory]</strong> Active travel conditions are currently favorable. Commuting during this window avoids high-traffic congestion, reducing exposure to traffic-related particulate matter. Add a valid Gemini API key to customize recommendations for current local weather and air quality.`;
             }
         }
         
+        if (typeof window !== 'undefined' && window.populateModalBody) {
+            window.populateModalBody();
+        }
+        
+        if (typeof window !== 'undefined' && window.syncMultimodalView) {
+            window.syncMultimodalView();
+        } else if (state.isMultimodalOnly) {
+            getEl('digest-block')?.classList.add('hidden');
+            getEl('personalized-block')?.classList.add('hidden');
+            getEl('ventilation-block')?.classList.add('hidden');
+            getEl('commute-block')?.classList.add('hidden');
+        }
+
         // Notify the application even on simulated/failed updates
         window.dispatchEvent(new Event('ai-updated'));
     }
@@ -871,5 +1060,312 @@ export async function searchLocation(query, syncCallback) {
     } catch (error) {
         console.error("Search Error:", error);
         showToast("Location not found. Please try a different search term.", true);
+    }
+}
+
+export async function analyzeHvacFilterWithGemini(base64Image, mimeType) {
+    const hvacSchema = {
+        type: "OBJECT",
+        properties: {
+            dustAccumulationPct: {
+                type: "INTEGER",
+                description: "Estimated percentage of dust accumulation (0 to 100)."
+            },
+            status: {
+                type: "STRING",
+                description: "Safety status rating (must be one of: 'GOOD', 'MODERATE', 'NEEDS REPLACEMENT', 'CRITICAL')."
+            },
+            energyDragPct: {
+                type: "INTEGER",
+                description: "Estimated HVAC electrical energy overhead/drag percentage due to dust blockage (e.g. 0, 5, 12, 15)."
+            },
+            remainingLifeWeeks: {
+                type: "INTEGER",
+                description: "Estimated remaining filter lifespan in weeks (0 to 12)."
+            },
+            advice: {
+                type: "STRING",
+                description: "1-2 sentence recommendation for maintaining or cleaning/replacing this filter."
+            }
+        },
+        required: ["dustAccumulationPct", "status", "energyDragPct", "remainingLifeWeeks", "advice"]
+    };
+
+    const promptText = "Analyze this photo of an indoor HVAC, AC, or heating air filter. Evaluate dust build-up, safety status ('GOOD', 'MODERATE', 'NEEDS REPLACEMENT', 'CRITICAL'), estimate additional energy drag percentage, forecast remaining life in weeks, and provide direct, helpful maintenance advice.";
+
+    try {
+        if (!state.GEMINI_API_KEY || state.GEMINI_API_KEY === '') throw new Error("Missing Gemini Key");
+
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent?key=${state.GEMINI_API_KEY}`;
+        
+        const requestBody = {
+            contents: [
+                {
+                    role: "user",
+                    parts: [
+                        {
+                            inlineData: {
+                                mimeType: mimeType || "image/png",
+                                data: base64Image
+                            }
+                        },
+                        {
+                            text: promptText
+                        }
+                    ]
+                }
+            ],
+            generationConfig: {
+                responseMimeType: "application/json",
+                responseSchema: hvacSchema
+            }
+        };
+
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(requestBody)
+        });
+
+        if (!response.ok) throw new Error("Gemini analysis request failed.");
+
+        const json = await response.json();
+        const text = json.candidates?.[0]?.content?.parts?.[0]?.text;
+        if (!text) throw new Error("Invalid response content from Gemini.");
+
+        return JSON.parse(text);
+
+    } catch (error) {
+        console.warn("Falling back to simulated filter analysis:", error.message);
+        return new Promise((resolve) => {
+            setTimeout(() => {
+                const dust = Math.floor(Math.random() * 45) + 15; // 15% to 60%
+                let status = "GOOD";
+                let drag = 0;
+                let life = 8;
+                let advice = "Filter fibers show light dust build-up. Airflow is unobstructed and HVAC system efficiency is optimal.";
+
+                if (dust > 50) {
+                    status = "NEEDS REPLACEMENT";
+                    drag = 12;
+                    life = 1;
+                    advice = "<strong>[Simulated Advisory]</strong> Heavy particle congestion detected on filter surface. Replace filter immediately to prevent air flow restriction and excessive energy usage.";
+                } else if (dust > 30) {
+                    status = "MODERATE";
+                    drag = 5;
+                    life = 4;
+                    advice = "<strong>[Simulated Advisory]</strong> Moderate dust accumulation present. We recommend vacuuming the mesh or preparing a replacement filter within 4 weeks.";
+                }
+
+                resolve({
+                    dustAccumulationPct: dust,
+                    status: status,
+                    energyDragPct: drag,
+                    remainingLifeWeeks: life,
+                    advice: advice
+                });
+            }, 1500);
+        });
+    }
+}
+
+export async function analyzeBiophilicPlantWithGemini(base64Image, mimeType) {
+    const plantSchema = {
+        type: "OBJECT",
+        properties: {
+            plantFloraDensity: {
+                type: "STRING",
+                description: "Flora coverage rating in the photo: 'LOW', 'MODERATE', 'HIGH', 'EXCELLENT'."
+            },
+            pmReductionPct: {
+                type: "INTEGER",
+                description: "Estimated indoor PM2.5 / particulate reduction percentage from current flora (e.g. 0 to 30)."
+            },
+            identifiedSpecies: {
+                type: "STRING",
+                description: "Comma-separated list of identified indoor plant species (e.g., 'Snake Plant, Spider Plant' or 'None')."
+            },
+            biophilicRating: {
+                type: "STRING",
+                description: "Mental well-being rating: 'POOR', 'FAIR', 'GOOD', 'OPTIMAL'."
+            },
+            recommendations: {
+                type: "STRING",
+                description: "1-2 sentence recommending specific NASA air-filtering plants suited for layout."
+            },
+            advice: {
+                type: "STRING",
+                description: "1-2 sentence recommendation for maintaining or optimizing room biophilia."
+            }
+        },
+        required: ["plantFloraDensity", "pmReductionPct", "identifiedSpecies", "biophilicRating", "recommendations", "advice"]
+    };
+
+    const promptText = "Analyze this photo of an indoor room, office, or living space. Identify any visible indoor plant species, evaluate the biophilic flora density ('LOW', 'MODERATE', 'HIGH', 'EXCELLENT'), estimate the indoor PM2.5 / particulate matter reduction percentage from current plants (0% if none), rate the biophilic mental wellbeing impact ('POOR', 'FAIR', 'GOOD', 'OPTIMAL'), recommend NASA-certified air-purifying plants suited for the space, and provide helpful, direct natural organic purification and maintenance advice.";
+
+    try {
+        if (!state.GEMINI_API_KEY || state.GEMINI_API_KEY === '') throw new Error("Missing Gemini Key");
+
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent?key=${state.GEMINI_API_KEY}`;
+        
+        const requestBody = {
+            contents: [
+                {
+                    role: "user",
+                    parts: [
+                        {
+                            inlineData: {
+                                mimeType: mimeType || "image/png",
+                                data: base64Image
+                            }
+                        },
+                        {
+                            text: promptText
+                        }
+                    ]
+                }
+            ],
+            generationConfig: {
+                responseMimeType: "application/json",
+                responseSchema: plantSchema
+            }
+        };
+
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(requestBody)
+        });
+
+        if (!response.ok) throw new Error("Gemini analysis request failed.");
+
+        const json = await response.json();
+        const text = json.candidates?.[0]?.content?.parts?.[0]?.text;
+        if (!text) throw new Error("Invalid response content from Gemini.");
+
+        return JSON.parse(text);
+
+    } catch (error) {
+        console.warn("Falling back to simulated biophilic plant analysis:", error.message);
+        return new Promise((resolve) => {
+            setTimeout(() => {
+                const densities = ["LOW", "MODERATE", "HIGH", "EXCELLENT"];
+                const ratings = ["POOR", "FAIR", "GOOD", "OPTIMAL"];
+                
+                const randomIdx = Math.floor(Math.random() * 4);
+                const density = densities[randomIdx];
+                const rating = ratings[randomIdx];
+                let pmReduction = 0;
+                let species = "None detected";
+                let recs = "We recommend adding a Snake Plant (Sansevieria trifasciata) or a Spider Plant for high-efficiency benzene and formaldehyde absorption.";
+                let advice = "<strong>[Simulated Advisory]</strong> Your room layout currently has minimal biophilic elements. Adding indoor plants will improve organic indoor air purification.";
+
+                if (randomIdx === 1) {
+                    pmReduction = 10;
+                    species = "Pothos, Snake Plant";
+                    recs = "Adding a Peace Lily or English Ivy would complement your current plants to capture more fine dust.";
+                    advice = "<strong>[Simulated Advisory]</strong> A couple of active air purifying plants are present. Keep leaves dust-free to optimize photosynthesis and natural organic bio-filtration.";
+                } else if (randomIdx >= 2) {
+                    pmReduction = randomIdx === 2 ? 20 : 30;
+                    species = "Boston Fern, Spider Plant, ZZ Plant, Peace Lily";
+                    recs = "No urgent additions needed, but a Rubber Plant can help target airborne microbiological contaminants.";
+                    advice = "<strong>[Simulated Advisory]</strong> Excellent flora density detected! This level of biophilia significantly lowers stress levels, reduces indoor PM2.5, and naturally stabilizes room humidity.";
+                }
+
+                resolve({
+                    plantFloraDensity: density,
+                    pmReductionPct: pmReduction,
+                    identifiedSpecies: species,
+                    biophilicRating: rating,
+                    recommendations: recs,
+                    advice: advice
+                });
+            }, 1500);
+        });
+    }
+}
+
+export async function editRoomImageWithGemini(base64Image, mimeType, promptText) {
+    try {
+        if (!state.GEMINI_API_KEY || state.GEMINI_API_KEY === '') {
+            throw new Error("Missing Gemini Key");
+        }
+
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image:generateContent?key=${state.GEMINI_API_KEY}`;
+        
+        const requestBody = {
+            contents: [
+                {
+                    role: "user",
+                    parts: [
+                        {
+                            inlineData: {
+                                mimeType: mimeType || "image/png",
+                                data: base64Image
+                            }
+                        },
+                        {
+                            text: promptText || "add some indoor plants to make the room more biophilic"
+                        }
+                    ]
+                }
+            ],
+            generationConfig: {
+                responseModalities: ["IMAGE", "TEXT"]
+            }
+        };
+
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(requestBody)
+        });
+
+        if (!response.ok) {
+            throw new Error("Gemini image editing request failed.");
+        }
+
+        const json = await response.json();
+        const parts = json.candidates?.[0]?.content?.parts || [];
+        let editedBase64 = null;
+        let editedMimeType = null;
+        let textResponse = "";
+
+        for (const part of parts) {
+            if (part.inlineData && part.inlineData.data) {
+                editedBase64 = part.inlineData.data;
+                editedMimeType = part.inlineData.mimeType || "image/jpeg";
+            } else if (part.text) {
+                textResponse = part.text;
+            }
+        }
+
+        if (!editedBase64) {
+            throw new Error("No image data returned from Gemini.");
+        }
+
+        return {
+            base64: editedBase64,
+            mimeType: editedMimeType,
+            text: textResponse
+        };
+
+    } catch (error) {
+        console.warn("Falling back to original image due to editing failure:", error.message);
+        return new Promise((resolve) => {
+            setTimeout(() => {
+                resolve({
+                    base64: base64Image,
+                    mimeType: mimeType || "image/png",
+                    text: "Simulated fallback: Gemini edit placeholder. Add a valid API key to edit the image."
+                });
+            }, 1500);
+        });
     }
 }

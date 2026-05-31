@@ -150,6 +150,77 @@
             text-transform: uppercase;
             letter-spacing: 0.05em;
         }
+
+        /* Subtle Breathing Glow Animations for Multimodal Features */
+        @keyframes hvacGlow {
+            0%, 100% {
+                box-shadow: 0 0 10px rgba(251, 188, 4, 0.15), inset 0 0 12px rgba(251, 188, 4, 0.04);
+                border-color: rgba(251, 188, 4, 0.25);
+            }
+            50% {
+                box-shadow: 0 0 18px rgba(251, 188, 4, 0.35), inset 0 0 18px rgba(251, 188, 4, 0.08);
+                border-color: rgba(251, 188, 4, 0.55);
+            }
+        }
+        .hvac-glowing {
+            animation: hvacGlow 4s infinite ease-in-out !important;
+        }
+
+        @keyframes plantGlow {
+            0%, 100% {
+                box-shadow: 0 0 10px rgba(129, 199, 132, 0.15), inset 0 0 12px rgba(129, 199, 132, 0.04);
+                border-color: rgba(129, 199, 132, 0.25);
+            }
+            50% {
+                box-shadow: 0 0 18px rgba(129, 199, 132, 0.35), inset 0 0 18px rgba(129, 199, 132, 0.08);
+                border-color: rgba(129, 199, 132, 0.55);
+            }
+        }
+        .plant-glowing {
+            animation: plantGlow 4s infinite ease-in-out !important;
+        }
+
+        @keyframes digestGlow {
+            0%, 100% {
+                box-shadow: 0 0 10px rgba(66, 133, 244, 0.15), inset 0 0 12px rgba(66, 133, 244, 0.04);
+                border-color: rgba(66, 133, 244, 0.25);
+            }
+            50% {
+                box-shadow: 0 0 18px rgba(66, 133, 244, 0.35), inset 0 0 18px rgba(66, 133, 244, 0.08);
+                border-color: rgba(66, 133, 244, 0.55);
+            }
+        }
+        .digest-glowing {
+            animation: digestGlow 4s infinite ease-in-out !important;
+        }
+
+        @keyframes ventilationGlow {
+            0%, 100% {
+                box-shadow: 0 0 10px rgba(88, 188, 130, 0.15), inset 0 0 12px rgba(88, 188, 130, 0.04);
+                border-color: rgba(88, 188, 130, 0.25);
+            }
+            50% {
+                box-shadow: 0 0 18px rgba(88, 188, 130, 0.35), inset 0 0 18px rgba(88, 188, 130, 0.08);
+                border-color: rgba(88, 188, 130, 0.55);
+            }
+        }
+        .ventilation-glowing {
+            animation: ventilationGlow 4s infinite ease-in-out !important;
+        }
+
+        @keyframes commuteGlow {
+            0%, 100% {
+                box-shadow: 0 0 10px rgba(137, 180, 250, 0.15), inset 0 0 12px rgba(137, 180, 250, 0.04);
+                border-color: rgba(137, 180, 250, 0.25);
+            }
+            50% {
+                box-shadow: 0 0 18px rgba(137, 180, 250, 0.35), inset 0 0 18px rgba(137, 180, 250, 0.08);
+                border-color: rgba(137, 180, 250, 0.55);
+            }
+        }
+        .commute-glowing {
+            animation: commuteGlow 4s infinite ease-in-out !important;
+        }
     </style>
 </head>
 
@@ -587,24 +658,35 @@
                             </div>
                         </div>
 
-                        <!-- Dropdown Profile Selector (Standard Label text: xs) -->
-                        <div class="shrink-0 relative w-full">
-                            <select id="profile-selector" class="w-full appearance-none bg-white/10 border border-[#3c4043] text-white px-3 py-1.5 rounded-lg text-xs font-semibold focus:outline-none focus:border-g-blue-medium/50 transition-colors shadow-sm cursor-pointer pr-8">
-                                <option value="General" class="bg-g-black text-white">Target Profile: General</option>
-                                <option value="Children" class="bg-g-black text-white">Target Profile: Children</option>
-                                <option value="Asthma" class="bg-g-black text-white">Target Profile: Asthma</option>
-                                <option value="Seniors" class="bg-[#3c4043] text-white">Target Profile: Seniors</option>
-                                <option value="Athletes/Joggers" class="bg-g-black text-white">Target Profile: Athletes/Joggers</option>
-                                <option value="Motorcyclist" class="bg-g-black text-white">Target Profile: Motorcyclist</option>
-                                <option value="Pregnant Women" class="bg-g-black text-white">Target Profile: Pregnant Women</option>
-                            </select>
-                            <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-g-grey-light">
-                                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                        <!-- Dropdown Profile Selector & Multimodal Button -->
+                        <div class="shrink-0 flex gap-2 items-center w-full">
+                            <div class="relative flex-1">
+                                <select id="profile-selector" class="w-full appearance-none bg-white/10 border border-[#3c4043] text-white px-3 py-1.5 rounded-lg text-xs font-semibold focus:outline-none focus:border-g-blue-medium/50 transition-colors shadow-sm cursor-pointer pr-8">
+                                    <option value="General" class="bg-g-black text-white">General</option>
+                                    <option value="Children" class="bg-g-black text-white">Children</option>
+                                    <option value="Asthma" class="bg-g-black text-white">Asthma</option>
+                                    <option value="Seniors" class="bg-[#3c4043] text-white">Seniors</option>
+                                    <option value="Athletes/Joggers" class="bg-g-black text-white">Athletes/Joggers</option>
+                                    <option value="Motorcyclist" class="bg-g-black text-white">Motorcyclist</option>
+                                    <option value="Pregnant Women" class="bg-g-black text-white">Pregnant Women</option>
+                                </select>
+                                <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-g-grey-light">
+                                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                                </div>
                             </div>
+                            <button id="btn-multimodal-features" class="bg-[#fbbc04]/20 hover:bg-[#fbbc04]/30 border border-[#fbbc04]/30 text-[#FEEFC3] px-2.5 py-1.5 rounded-lg text-xs font-bold transition-all duration-200 flex items-center gap-1 shrink-0 shadow-sm" title="Multimodal Features Check">
+                                <span>📷</span> Multimodal
+                            </button>
                         </div>
 
                         <div class="flex-1 overflow-y-auto dark-scrollbar space-y-2 pr-1">
-                            <div class="bg-white/5 border border-[#3c4043] rounded-xl p-3">
+                            <!-- Back Button to restore standard view when in multimodal mode -->
+                            <div id="multimodal-back-container" class="hidden">
+                                <button id="btn-multimodal-back" class="w-full bg-[#fbbc04]/10 hover:bg-[#fbbc04]/20 border border-[#fbbc04]/30 text-[#fbbc04] hover:text-white px-3 py-2 rounded-xl text-xs font-bold transition-all duration-200 flex items-center justify-center gap-2 shadow-sm cursor-pointer mb-2">
+                                    <span>←</span> Back to Standard View
+                                </button>
+                            </div>
+                            <div id="digest-block" class="bg-white/5 border border-[#3c4043] rounded-xl p-3 transition-all duration-300 digest-glowing">
                                 <!-- Standard Label (xs) -->
                                 <h3 class="text-[15px] font-black text-g-blue-medium mb-2 flex items-center gap-1.5 drop-shadow-sm">
                                     <img src="/assets/icons/protection.png" class="w-6 h-6 object-contain bg-white/20 p-1 rounded-md shadow-[0_0_8px_rgba(255,255,255,0.4)] border border-white/30" alt="Protection" onerror="this.style.display='none'">
@@ -622,6 +704,172 @@
                                 <!-- Standard Readable Text (sm) -->
                                 <div id="ai-personalized" class="text-sm text-g-grey-light leading-relaxed"></div>
                             </div>
+
+                            <!-- Smart Ambient Ventilation Guide (Eco-wellness) -->
+                            <div id="ventilation-block" class="bg-g-green-medium/10 border border-g-green-medium/20 rounded-xl p-3 hidden transition-all duration-300 ventilation-glowing">
+                                <h3 class="text-[15px] font-black text-[#58bc82] mb-2 flex items-center gap-1.5 drop-shadow-sm">
+                                    <img src="/assets/icons/fan.png" id="ventilation-icon" class="w-6 h-6 object-contain bg-white/20 p-1 rounded-md shadow-[0_0_8px_rgba(255,255,255,0.4)] border border-white/30" alt="Ventilation" onerror="this.style.display='none'">
+                                    Smart Ventilation Advisory
+                                </h3>
+                                <div class="flex items-center justify-between mb-2">
+                                    <span id="ventilation-badge" class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-[#34A853]/20 text-[#CEEAD6] border border-[#34A853]/30">OPEN WINDOWS</span>
+                                    <span id="ventilation-saving" class="text-xs font-bold text-[#CEEAD6] bg-[#34A853]/15 px-2 py-0.5 rounded border border-[#34A853]/25">Est. 15% energy saved</span>
+                                </div>
+                                <div id="ventilation-rationale" class="text-sm text-g-grey-light leading-relaxed">Outdoor air quality is clean and temperatures are cool. Recommended ventilation: <strong>30 mins</strong>.</div>
+                            </div>
+
+                            <!-- Green Commute Active Travel Routing (Eco-wellness) -->
+                            <div id="commute-block" class="bg-g-blue-medium/10 border border-[#3c4043] rounded-xl p-3 hidden transition-all duration-300 commute-glowing">
+                                <h3 class="text-[15px] font-black text-[#89b4fa] mb-2 flex items-center gap-1.5 drop-shadow-sm">
+                                    <img src="/assets/icons/electric-bike.png" id="commute-icon" class="w-6 h-6 object-contain bg-white/20 p-1 rounded-md shadow-[0_0_8px_rgba(255,255,255,0.4)] border border-white/30" alt="Commute" onerror="this.style.display='none'">
+                                    Green Commute Planner
+                                </h3>
+                                <div class="flex items-center justify-between mb-2">
+                                    <span id="commute-mode" class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-[#4285F4]/20 text-[#D2E3FC] border border-[#4285F4]/30">WALKING RECOMMENDED</span>
+                                    <span id="commute-carbon" class="text-xs font-bold text-[#CEEAD6] bg-[#34A853]/15 px-2 py-0.5 rounded border border-[#34A853]/25">-1.2 kg CO₂</span>
+                                </div>
+                                <div id="commute-details" class="text-sm text-g-grey-light leading-relaxed mb-1.5">
+                                    Optimal window: <strong id="commute-time">08:00 AM - 10:00 AM</strong> 
+                                    <span class="block text-xs text-[#D2E3FC] font-bold mt-1">💨 <span id="commute-exposure">35%</span> respiratory exposure reduction</span>
+                                </div>
+                                <div id="commute-advisory" class="text-xs text-g-grey-light opacity-90 leading-relaxed italic border-t border-[#3c4043] pt-1.5 mt-1.5">Loading commute advice...</div>
+                            </div>
+
+                            <!-- HVAC Filter Health Check (Multimodal Vision) -->
+                            <div id="hvac-filter-block" class="bg-white/5 border border-[#3c4043] rounded-xl p-3 transition-all duration-300 hidden hvac-glowing">
+                                <h3 class="text-[15px] font-black text-[#fbbc04] mb-2 flex items-center gap-1.5 drop-shadow-sm">
+                                    <img src="/assets/icons/air-conditioner.png" id="hvac-filter-icon" class="w-6 h-6 object-contain bg-white/20 p-1 rounded-md shadow-[0_0_8px_rgba(255,255,255,0.4)] border border-white/30" alt="HVAC Filter" onerror="this.style.display='none'">
+                                    HVAC Filter Health Check
+                                </h3>
+                                <div class="text-xs text-g-grey-light mb-3 leading-relaxed">
+                                    Upload a photo of your AC or heating air filter. Gemini will analyze dust congestion, estimate filter life, and calculate energy drag.
+                                </div>
+                                
+                                <div class="flex flex-col gap-2.5">
+                                    <!-- Photo Upload area / buttons -->
+                                    <div class="flex items-center gap-2">
+                                        <button id="btn-hvac-upload" class="flex-1 bg-white/10 hover:bg-white/20 border border-white/20 text-white hover:text-[#fbbc04] rounded-lg py-1.5 px-3 text-xs font-bold transition-all duration-200 flex items-center justify-center gap-1.5 shadow-sm">
+                                            <span>📷</span> Upload Filter Photo
+                                        </button>
+                                        <input type="file" id="hvac-file-input" accept="image/*" class="hidden">
+                                        <button id="btn-hvac-analyze" disabled class="flex-1 bg-[#fbbc04]/25 text-[#FEEFC3] border border-[#fbbc04]/30 rounded-lg py-1.5 px-3 text-xs font-bold transition-all duration-200 flex items-center justify-center gap-1.5 opacity-40 cursor-not-allowed">
+                                            <span>🔍</span> Analyze Photo
+                                        </button>
+                                    </div>
+                                    
+                                    <!-- Upload Preview (Hidden until image selected) -->
+                                    <div id="hvac-preview-container" class="hidden flex flex-col items-center justify-center border border-dashed border-[#3c4043] rounded-lg p-2 bg-black/20">
+                                        <img id="hvac-preview-img" class="max-h-24 max-w-full object-contain rounded-md shadow-sm mb-1" alt="Filter Preview">
+                                        <span id="hvac-file-name" class="text-[10px] text-g-grey-light truncate max-w-xs"></span>
+                                    </div>
+
+                                    <!-- Loading State (Hidden by default) -->
+                                    <div id="hvac-loading" class="hidden flex items-center justify-center gap-2.5 py-3 border-t border-[#3c4043] mt-2.5">
+                                        <img src="https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/google-gemini.svg" class="animate-spin w-4 h-4 object-contain drop-shadow-[0_0_4px_rgba(255,255,255,0.4)]" alt="Gemini Loading">
+                                        <span class="text-xs text-[#FEEFC3] font-medium tracking-wide animate-pulse">Analyzing filter fibers...</span>
+                                    </div>
+
+                                    <!-- Result View (Hidden by default) -->
+                                    <div id="hvac-result" class="hidden border-t border-[#3c4043] pt-2.5 mt-1">
+                                        <div class="flex items-center justify-between mb-2">
+                                            <span id="hvac-status-badge" class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-[#34A853]/20 text-[#CEEAD6] border border-[#34A853]/30">GOOD FILTER</span>
+                                            <span id="hvac-drag" class="text-xs font-bold text-[#CEEAD6] bg-[#34A853]/15 px-2 py-0.5 rounded border border-[#34A853]/25">Est. 0% energy drag</span>
+                                        </div>
+                                        <div class="text-sm text-g-grey-light leading-relaxed mb-2 space-y-1">
+                                            <div>Dust Accumulation: <strong id="hvac-dust-level">15%</strong></div>
+                                            <!-- Simple Progress Bar for Dust -->
+                                            <div class="w-full bg-white/10 h-1.5 rounded-full overflow-hidden mt-1">
+                                                <div id="hvac-dust-bar" class="bg-[#34A853] h-full rounded-full transition-all duration-500" style="width: 15%"></div>
+                                            </div>
+                                            <div class="text-xs text-g-grey-light mt-1.5">Remaining Life: <strong id="hvac-life">8 weeks</strong></div>
+                                        </div>
+                                        <div id="hvac-advice" class="text-xs text-g-grey-light opacity-90 leading-relaxed italic border-t border-[#3c4043]/50 pt-2 mt-2">Filter fibers are clean. No airflow resistance detected.</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Biophilic Indoor Plant Advisor (Natural Purification) -->
+                            <div id="plant-advisor-block" class="bg-white/5 border border-[#3c4043] rounded-xl p-3 transition-all duration-300 hidden plant-glowing">
+                                <h3 class="text-[15px] font-black text-[#81c784] mb-2 flex items-center gap-1.5 drop-shadow-sm">
+                                    <img src="/assets/icons/plant-pot.png" id="plant-advisor-icon" class="w-6 h-6 object-contain bg-white/20 p-1 rounded-md shadow-[0_0_8px_rgba(255,255,255,0.4)] border border-white/30" alt="Plant Advisor" onerror="this.style.display='none'">
+                                    Biophilic Indoor Plant Advisor
+                                </h3>
+                                <div class="text-xs text-g-grey-light mb-3 leading-relaxed">
+                                    Upload a photo of your room or indoor plants. Gemini will identify the species, evaluate plant health, and recommend NASA-certified air-purifying foliage.
+                                </div>
+                                
+                                <div class="flex flex-col gap-2.5">
+                                    <!-- Photo Upload area / buttons -->
+                                    <div class="flex items-center gap-2">
+                                        <button id="btn-plant-upload" class="flex-1 bg-white/10 hover:bg-white/20 border border-white/20 text-white hover:text-[#81c784] rounded-lg py-1.5 px-3 text-xs font-bold transition-all duration-200 flex items-center justify-center gap-1.5 shadow-sm">
+                                            <span>📷</span> Upload Room Photo
+                                        </button>
+                                        <input type="file" id="plant-file-input" accept="image/*" class="hidden">
+                                        <button id="btn-plant-analyze" disabled class="flex-1 bg-[#81c784]/25 text-[#E8F5E9] border border-[#81c784]/30 rounded-lg py-1.5 px-3 text-xs font-bold transition-all duration-200 flex items-center justify-center gap-1.5 opacity-40 cursor-not-allowed">
+                                            <span>🔍</span> Analyze Photo
+                                        </button>
+                                    </div>
+                                    
+                                    <!-- Upload Preview (Hidden until image selected) -->
+                                    <div id="plant-preview-container" class="hidden flex flex-col items-center justify-center border border-dashed border-[#3c4043] rounded-lg p-2 bg-black/20">
+                                        <img id="plant-preview-img" class="max-h-24 max-w-full object-contain rounded-md shadow-sm mb-1" alt="Room Preview">
+                                        <span id="plant-file-name" class="text-[10px] text-g-grey-light truncate max-w-xs"></span>
+                                    </div>
+
+                                    <!-- Loading State (Hidden by default) -->
+                                    <div id="plant-loading" class="hidden flex items-center justify-center gap-2.5 py-3 border-t border-[#3c4043] mt-2.5">
+                                        <img src="https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/google-gemini.svg" class="animate-spin w-4 h-4 object-contain drop-shadow-[0_0_4px_rgba(255,255,255,0.4)]" alt="Gemini Loading">
+                                        <span class="text-xs text-[#E8F5E9] font-medium tracking-wide animate-pulse">Analyzing room biophilia...</span>
+                                    </div>
+
+                                    <!-- AI Image Edit Container (Hidden until image selected) -->
+                                    <div id="plant-edit-container" class="hidden flex flex-col gap-2.5 border-t border-[#3c4043] pt-2.5 mt-1">
+                                        <div class="text-xs font-bold text-[#81c784] flex items-center gap-1.5">
+                                            <img src="https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/google-gemini.svg" class="h-3.5 object-contain" alt="Gemini"> Edit Room with Gemini AI
+                                        </div>
+                                        <div class="flex gap-2">
+                                            <input type="text" id="plant-edit-prompt" placeholder="e.g. Add a snake plant in the corner" class="flex-1 bg-black/40 border border-[#3c4043] rounded-lg px-2.5 py-1.5 text-xs text-white placeholder-g-grey focus:outline-none focus:border-[#81c784] transition-all">
+                                            <button id="btn-plant-edit" class="bg-[#81c784] hover:bg-[#66bb6a] text-black font-bold rounded-lg py-1.5 px-3 text-xs transition-all flex items-center gap-1 whitespace-nowrap">
+                                                <span>🪄</span> Edit
+                                            </button>
+                                        </div>
+                                        
+                                        <!-- AI Editing Loader (Hidden by default) -->
+                                        <div id="plant-edit-loading" class="hidden flex items-center justify-center gap-2 py-2">
+                                            <img src="https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/svg/google-gemini.svg" class="animate-spin w-4 h-4 object-contain drop-shadow-[0_0_4px_rgba(255,255,255,0.4)]" alt="Gemini Loading">
+                                            <span class="text-xs text-[#E8F5E9] animate-pulse">Gemini is editing your room...</span>
+                                        </div>
+
+                                        <!-- AI Edited Image Preview Container (Hidden by default) -->
+                                        <div id="plant-edited-container" class="hidden flex flex-col items-center justify-center border border-dashed border-[#81c784]/40 rounded-lg p-2 bg-black/35 relative">
+                                            <div class="text-[10px] text-[#81c784] font-bold self-start mb-1 flex items-center gap-1">
+                                                <span>🖼️</span> AI Generated Preview
+                                            </div>
+                                            <img id="plant-edited-img" class="max-h-36 max-w-full object-contain rounded-md shadow-md mb-2 border border-white/10 cursor-zoom-in transition-all duration-300 hover:scale-[1.03] hover:shadow-[0_0_12px_rgba(129,199,132,0.3)] hover:border-[#81c784]/50" alt="Edited Room Preview" title="Click to view full resolution">
+                                            <button id="btn-use-edited" class="w-full bg-[#81c784]/20 hover:bg-[#81c784]/35 text-[#81c784] border border-[#81c784]/30 hover:border-[#81c784] rounded-lg py-1.5 px-2 text-xs font-bold transition-all flex items-center justify-center gap-1 shadow-[0_0_8px_rgba(129,199,132,0.1)]">
+                                                <span>🔄</span> Use as Source Image
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    <!-- Result View (Hidden by default) -->
+                                    <div id="plant-result" class="hidden border-t border-[#3c4043] pt-2.5 mt-1">
+                                        <div class="flex items-center justify-between mb-2">
+                                            <span id="plant-status-badge" class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-[#81c784]/20 text-[#E8F5E9] border border-[#81c784]/30">SUITABLE BIOPHILIA</span>
+                                            <span id="plant-purification" class="text-xs font-bold text-[#CEEAD6] bg-[#34A853]/15 px-2 py-0.5 rounded border border-[#34A853]/25">Est. 15% PM reduction</span>
+                                        </div>
+                                        <div class="text-sm text-g-grey-light leading-relaxed mb-2 space-y-1">
+                                            <div>Flora Density: <strong id="plant-density-level">MODERATE</strong></div>
+                                            <div>Identified Species: <strong id="plant-identified-species">None</strong></div>
+                                            <div>Biophilic Well-being: <strong id="plant-rating">GOOD</strong></div>
+                                            <div class="text-xs text-[#A1C0D4] bg-[#2E3C4E]/40 border border-[#4F6C7D]/30 p-2 rounded-lg mt-1.5">
+                                                <span class="font-bold text-white block mb-0.5">Top NASA Purifiers:</span>
+                                                <span id="plant-recommendations">Snake Plant, Spider Plant</span>
+                                            </div>
+                                        </div>
+                                        <div id="plant-advice" class="text-xs text-g-grey-light opacity-90 leading-relaxed italic border-t border-[#3c4043]/50 pt-2 mt-2">Recommended addition: 1-2 NASA-certified air-filtering plants to maximize natural organic bio-filtration.</div>
+                                    </div>
+                                </div>
                         </div>
                     </div>
                 </div>
@@ -685,6 +933,20 @@
     <button id="btn-close-map" class="hidden"></button>
     <button id="btn-cancel-map" class="hidden"></button>
     
+    <!-- Image Lightbox Modal Overlay (For full-resolution generated images) -->
+    <div id="image-lightbox-modal" class="hidden fixed inset-0 z-[2000] bg-black/95 backdrop-blur-md flex items-center justify-center p-4 sm:p-6 opacity-0 transition-opacity duration-300 cursor-zoom-out">
+        <div class="relative max-w-5xl max-h-full flex flex-col items-center justify-center transform scale-95 transition-transform duration-300" id="image-lightbox-content">
+            <!-- Close Button -->
+            <button id="btn-close-lightbox" class="absolute top-[-44px] right-0 p-2 rounded-full text-white/70 hover:text-white bg-white/10 hover:bg-white/20 transition-all z-10 shadow-lg border border-white/10 cursor-pointer" title="Close Preview">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"></path></svg>
+            </button>
+            <!-- Lightbox Image -->
+            <img id="lightbox-img" class="max-w-full max-h-[80vh] object-contain rounded-xl shadow-2xl border border-white/10 select-none cursor-default" alt="Full Resolution Generated Room Preview">
+            <!-- Prompt / Title Caption Overlay (Premium glassmorphism) -->
+            <div id="lightbox-caption" class="absolute bottom-4 left-4 right-4 bg-black/70 backdrop-blur-md border border-white/10 rounded-xl px-4 py-2 text-xs text-white font-medium text-center shadow-lg pointer-events-none select-none max-w-md mx-auto"></div>
+        </div>
+    </div>
+
     <!-- AI Modal Overlay -->
     <div id="ai-modal" class="hidden fixed inset-0 z-[1000] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 sm:p-6 opacity-0 transition-opacity duration-300">
         <div class="bg-g-black border border-transparent rounded-2xl w-full max-w-2xl max-h-full flex flex-col shadow-2xl transform scale-95 transition-transform duration-300" id="ai-modal-content">
@@ -711,22 +973,25 @@
                 </div>
             </div>
             
-            <!-- Modal Profile Selector (Standard Label text: xs) -->
-            <div class="px-4 sm:px-6 pt-4 shrink-0">
-                <div class="relative w-full">
+            <!-- Modal Profile Selector & Multimodal Button -->
+            <div class="px-4 sm:px-6 pt-4 shrink-0 flex gap-2 items-center w-full">
+                <div class="relative flex-1">
                     <select id="modal-profile-selector" class="w-full appearance-none bg-white/5 border border-[#3c4043] text-white px-3 py-2.5 rounded-lg text-xs font-semibold focus:outline-none focus:border-g-blue-medium/50 transition-colors shadow-sm cursor-pointer pr-8 hover:bg-white/10">
-                        <option value="General" class="bg-g-black text-white">Target Profile: General</option>
-                        <option value="Children" class="bg-g-black text-white">Target Profile: Children</option>
-                        <option value="Asthma" class="bg-g-black text-white">Target Profile: Asthma</option>
-                        <option value="Seniors" class="bg-[#3c4043] text-white">Target Profile: Seniors</option>
-                        <option value="Athletes/Joggers" class="bg-g-black text-white">Target Profile: Athletes/Joggers</option>
-                        <option value="Motorcyclist" class="bg-g-black text-white">Target Profile: Motorcyclist</option>
-                        <option value="Pregnant Women" class="bg-g-black text-white">Target Profile: Pregnant Women</option>
+                        <option value="General" class="bg-g-black text-white">General</option>
+                        <option value="Children" class="bg-g-black text-white">Children</option>
+                        <option value="Asthma" class="bg-g-black text-white">Asthma</option>
+                        <option value="Seniors" class="bg-[#3c4043] text-white">Seniors</option>
+                        <option value="Athletes/Joggers" class="bg-g-black text-white">Athletes/Joggers</option>
+                        <option value="Motorcyclist" class="bg-g-black text-white">Motorcyclist</option>
+                        <option value="Pregnant Women" class="bg-g-black text-white">Pregnant Women</option>
                     </select>
                     <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-g-grey-light">
                         <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
                     </div>
                 </div>
+                <button id="btn-modal-multimodal-features" class="bg-[#fbbc04]/20 hover:bg-[#fbbc04]/30 border border-[#fbbc04]/30 text-[#FEEFC3] px-3 py-2.5 rounded-lg text-xs font-bold transition-all duration-200 flex items-center gap-1 shrink-0 shadow-sm" title="Multimodal Features Check">
+                    <span>📷</span> Multimodal
+                </button>
             </div>
 
             <!-- Body -->
